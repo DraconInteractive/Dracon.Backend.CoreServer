@@ -7,5 +7,5 @@ namespace CoreServer.Services;
 public interface IChatHub
 {
     Task HandleConnectionAsync(WebSocket socket, CancellationToken cancellationToken = default);
-    Task BroadcastTextAsync(string message, CancellationToken cancellationToken = default);
+    Task BroadcastTextAsync(string message, string? senderId, CancellationToken cancellationToken = default);
 }

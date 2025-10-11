@@ -28,7 +28,7 @@ public class InMemoryChatHub : IChatHub
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    await BroadcastTextAsync(message, cancellationToken);
+                    await BroadcastTextAsync(message, id, cancellationToken);
                 }
             }
         }
@@ -43,9 +43,11 @@ public class InMemoryChatHub : IChatHub
         }
     }
 
-    public async Task BroadcastTextAsync(string message, CancellationToken cancellationToken = default)
+    public async Task BroadcastTextAsync(string message, string? senderId, CancellationToken cancellationToken = default)
     {
-        var payload = JsonSerializer.Serialize(new { sender = "client", text = message, ts = DateTimeOffset.UtcNow });
+        var sender = senderId is null ? "server" : "client";
+        var id = senderId ?? string.Empty;
+        var payload = JsonSerializer.Serialize(new { sender, id, text = message, ts = DateTimeOffset.UtcNow });
         var bytes = Encoding.UTF8.GetBytes(payload);
         var segment = new ArraySegment<byte>(bytes);
         foreach (var kvp in _sockets)
@@ -68,5 +70,5 @@ public class InMemoryChatHub : IChatHub
     }
 
     private Task SendSystemAsync(string text, CancellationToken cancellationToken)
-        => BroadcastTextAsync($"[system] {text}", cancellationToken);
+        => BroadcastTextAsync($"[system] {text}", senderId: null, cancellationToken);
 }

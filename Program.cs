@@ -39,4 +39,109 @@ app.Map("/ws/chat", async (HttpContext context, IChatHub hub) =>
 // Optional root endpoint
 app.MapGet("/", () => "Core Server is running");
 
+// Simple viewer page to see and send chat messages
+app.MapGet("/view", () =>
+{
+    var html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Core Server - Message Viewer</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 0; }
+    header { padding: 12px 16px; background: #0b5; color: #fff; font-weight: 600; }
+    main { padding: 12px 16px; }
+    #status { margin-bottom: 8px; font-size: 0.95rem; }
+    #log { white-space: pre-wrap; border: 1px solid #8883; border-radius: 6px; padding: 8px; height: 300px; overflow: auto; background: #00000008; }
+    .row { display: flex; gap: 8px; margin-top: 10px; }
+    input[type=text] { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #8883; }
+    button { padding: 8px 12px; border: 0; border-radius: 6px; background: #0b5; color: #fff; cursor: pointer; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .sent { color: #0b5; }
+    .recv { color: #06c; }
+    .sys { color: #a50; }
+  </style>
+</head>
+<body>
+  <header>Core Server - Message Viewer</header>
+  <main>
+    <div id="status">Connecting…</div>
+    <div id="log" aria-live="polite"></div>
+    <div class="row">
+      <input id="message" type="text" placeholder="Type a message…" />
+      <button id="send" disabled>Send</button>
+    </div>
+  </main>
+  <script>
+    (function () {
+      const logEl = document.getElementById('log');
+      const statusEl = document.getElementById('status');
+      const inputEl = document.getElementById('message');
+      const sendBtn = document.getElementById('send');
+
+      function ts() {
+        const d = new Date();
+        return d.toLocaleTimeString();
+      }
+
+      function log(kind, text) {
+        const div = document.createElement('div');
+        div.className = kind;
+        div.textContent = `[${ts()}] ${text}`;
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      const wsUrl = `${proto}://${location.host}/ws/chat`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        statusEl.textContent = `Connected to ${wsUrl}`;
+        sendBtn.disabled = false;
+        inputEl.focus();
+        log('sys', 'WebSocket open');
+      };
+      ws.onmessage = (ev) => {
+        // Try to parse JSON, fallback to raw text
+        let msg = ev.data;
+        try {
+          const o = JSON.parse(ev.data);
+          msg = JSON.stringify(o);
+        } catch {}
+        log('recv', `Received: ${msg}`);
+      };
+      ws.onclose = (ev) => {
+        statusEl.textContent = `Disconnected (${ev.code})`;
+        sendBtn.disabled = true;
+        log('sys', `WebSocket closed: code=${ev.code}`);
+      };
+      ws.onerror = (ev) => {
+        log('sys', 'WebSocket error');
+      };
+
+      function sendCurrent() {
+        const text = inputEl.value.trim();
+        if (!text || ws.readyState !== WebSocket.OPEN) return;
+        ws.send(text);
+        log('sent', `Sent: ${text}`);
+        inputEl.value = '';
+        inputEl.focus();
+      }
+
+      sendBtn.addEventListener('click', sendCurrent);
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendCurrent();
+      });
+    })();
+  </script>
+</body>
+</html>
+""";
+    return Results.Content(html, "text/html");
+});
+
 app.Run();
