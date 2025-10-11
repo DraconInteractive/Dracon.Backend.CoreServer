@@ -2,11 +2,11 @@
 
 namespace CoreServer.Logic;
 
-public class ServerLogic : IServerLogic
+public class RestApiService : IRestApiService
 {
     private readonly IUserRegistry _users;
 
-    public ServerLogic(IUserRegistry users)
+    public RestApiService(IUserRegistry users)
     {
         _users = users;
     }

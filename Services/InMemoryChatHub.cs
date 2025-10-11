@@ -2,12 +2,19 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using CoreServer.Logic;
 
 namespace CoreServer.Services;
 
 public class InMemoryChatHub : IChatHub
 {
     private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
+    private readonly IChatResponseHandler _chatResponseHandler;
+
+    public InMemoryChatHub(IChatResponseHandler chatResponseHandler)
+    {
+        _chatResponseHandler = chatResponseHandler;
+    }
 
     public async Task HandleConnectionAsync(WebSocket socket, CancellationToken cancellationToken = default)
     {
@@ -28,7 +35,15 @@ public class InMemoryChatHub : IChatHub
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    // 1) Echo/broadcast the original message to all clients (including sender)
                     await BroadcastTextAsync(message, id, cancellationToken);
+
+                    // 2) Build and send a server response as a separate system message
+                    var response = await _chatResponseHandler.BuildResponseAsync(message, id, cancellationToken);
+                    if (!string.IsNullOrEmpty(response))
+                    {
+                        await SendSystemAsync(response, cancellationToken);
+                    }
                 }
             }
         }

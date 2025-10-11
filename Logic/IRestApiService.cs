@@ -1,6 +1,6 @@
 ﻿namespace CoreServer.Logic;
 
-public interface IServerLogic
+public interface IRestApiService
 {
     string OnlinePing();
     int GetLatestVersion();

@@ -5,15 +5,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Register services and logic layer
 builder.Services.AddSingleton<IUserRegistry, InMemoryUserRegistry>();
+builder.Services.AddSingleton<IChatResponseHandler, DefaultChatResponseHandler>();
 builder.Services.AddSingleton<IChatHub, InMemoryChatHub>();
-builder.Services.AddSingleton<IServerLogic, ServerLogic>();
+builder.Services.AddSingleton<IRestApiService, RestApiService>();
 
 var app = builder.Build();
 
 // REST API endpoints
-app.MapGet("/online", (IServerLogic logic) => Results.Ok(logic.OnlinePing()));
-app.MapGet("/version", (IServerLogic logic) => Results.Ok(logic.GetLatestVersion()));
-app.MapPost("/register", (HttpRequest req, IServerLogic logic) =>
+app.MapGet("/online", (IRestApiService logic) => Results.Ok(logic.OnlinePing()));
+app.MapGet("/version", (IRestApiService logic) => Results.Ok(logic.GetLatestVersion()));
+app.MapPost("/register", (HttpRequest req, IRestApiService logic) =>
 {
     var id = req.Query["id"].ToString();
     var name = req.Query["name"].ToString();
