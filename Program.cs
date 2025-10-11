@@ -1,12 +1,25 @@
 using CoreServer.Logic;
 using CoreServer.Services;
+using System;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Register services and logic layer
 builder.Services.AddSingleton<IUserRegistry, InMemoryUserRegistry>();
 builder.Services.AddSingleton<IChatResponseHandler, ActionChatResponseHandler>();
-builder.Services.AddSingleton<IChatAction, TurnOnLightAction>();
+
+// Register all chat actions automatically so every IChatAction is checked
+var actionInterface = typeof(IChatAction);
+var assembly = actionInterface.Assembly;
+foreach (var type in assembly.GetTypes())
+{
+    if (type.IsClass && !type.IsAbstract && actionInterface.IsAssignableFrom(type))
+    {
+        builder.Services.AddSingleton(typeof(IChatAction), type);
+    }
+}
+
 builder.Services.AddSingleton<IChatHub, InMemoryChatHub>();
 builder.Services.AddSingleton<IRestApiService, RestApiService>();
 
