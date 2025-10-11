@@ -49,8 +49,8 @@ public class GPTChatResponseHandler : IChatResponseHandler
         var payload = new ResponsesRequest
         {
             model = model,
-            input = message,
-            temperature = 0.6
+            input = message
+            // temperature intentionally omitted: some models (e.g., gpt-5-nano) do not support it
         };
 
         var json = JsonSerializer.Serialize(payload, JsonOptions);
@@ -61,7 +61,8 @@ public class GPTChatResponseHandler : IChatResponseHandler
             using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             if (!resp.IsSuccessStatusCode)
             {
-                return "received"; // graceful fallback
+                var errorBody = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                return $"Bad response from agent: {(int)resp.StatusCode} {resp.ReasonPhrase}. {errorBody}"; // include HTTP details for diagnostics
             }
 
             await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -135,8 +136,6 @@ public class GPTChatResponseHandler : IChatResponseHandler
         public string model { get; set; } = string.Empty;
         public object? input { get; set; }
         public double? temperature { get; set; }
-        
-        public string prompt { get; set; } = "You are a helpful and concise ai agent";
     }
 
     private sealed class ResponsesResponse
