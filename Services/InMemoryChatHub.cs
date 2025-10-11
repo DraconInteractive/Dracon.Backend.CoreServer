@@ -45,7 +45,7 @@ public class InMemoryChatHub : IChatHub
 
     public async Task BroadcastTextAsync(string message, string? senderId, CancellationToken cancellationToken = default)
     {
-        var sender = senderId is null ? "server" : "client";
+        var sender = senderId is null ? "system" : "client";
         var id = senderId ?? string.Empty;
         var payload = JsonSerializer.Serialize(new { sender, id, text = message, ts = DateTimeOffset.UtcNow });
         var bytes = Encoding.UTF8.GetBytes(payload);
@@ -70,5 +70,5 @@ public class InMemoryChatHub : IChatHub
     }
 
     private Task SendSystemAsync(string text, CancellationToken cancellationToken)
-        => BroadcastTextAsync($"[system] {text}", senderId: null, cancellationToken);
+        => BroadcastTextAsync(text, senderId: null, cancellationToken);
 }
