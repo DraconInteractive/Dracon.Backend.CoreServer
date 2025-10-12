@@ -14,11 +14,19 @@ public class GreetingAction : IChatAction
     //  - "hi there", "hello there"
     //  - "good morning/afternoon/evening/day"
     // Allows optional leading/trailing whitespace and optional trailing punctuation.
-    public Regex Pattern { get; } = new(
+    public Regex? Pattern { get; } = new(
         pattern: @"^\s*(?:hi|hello|hey|howdy|greetings|yo|sup|what(?:'s| is)\s+up|hi\s+there|hello\s+there|good\s+(?:morning|afternoon|evening|day))\b[!.]?\s*$",
         options: RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    public string StrictPattern { get; } = "greet";
+
     public Task<string?> ExecuteAsync(Match match, string originalMessage, string clientId, CancellationToken cancellationToken = default)
+    {
+        var response = $"Hello!";
+        return Task.FromResult<string?>(response);
+    }
+
+    public Task<string?> ExecuteAsync(string originalMessage, string clientId, CancellationToken cancellationToken = default)
     {
         var response = $"Hello!";
         return Task.FromResult<string?>(response);

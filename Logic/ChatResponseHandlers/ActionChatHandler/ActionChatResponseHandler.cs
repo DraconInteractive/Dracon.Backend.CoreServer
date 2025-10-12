@@ -21,8 +21,22 @@ public class ActionChatResponseHandler : IChatResponseHandler
 
         var text = message.Trim();
 
+        bool strict = text[0] == '/';
+        string strictTrigger = strict ? text.TrimStart('/').Split(' ')[0] : "";
         foreach (var action in _actions)
         {
+            if (strict && !string.IsNullOrEmpty(strictTrigger))
+            {
+                var strictMatch = action.StrictPattern == strictTrigger;
+                if (strictMatch)
+                {
+                    var result = await action.ExecuteAsync(text.TrimStart('/'), clientId, cancellationToken).ConfigureAwait(false);
+                    return string.IsNullOrWhiteSpace(result) ? string.Empty : result!;
+                }
+
+                continue;
+            }
+            
             var match = action.Pattern.Match(text);
             if (match.Success)
             {
@@ -32,6 +46,6 @@ public class ActionChatResponseHandler : IChatResponseHandler
         }
 
         // Fallback when no action matches
-        return "received";
+        return strict ? "No matching action found." : "Message received.";
     }
 }

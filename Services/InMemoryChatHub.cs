@@ -9,6 +9,8 @@ namespace CoreServer.Services;
 public class InMemoryChatHub : IChatHub
 {
     private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
+    private readonly ConcurrentDictionary<string, ClientContext> _contexts = new();
+    
     private readonly IChatResponseHandler _chatResponseHandler;
 
     public InMemoryChatHub(IChatResponseHandler chatResponseHandler)
@@ -20,6 +22,7 @@ public class InMemoryChatHub : IChatHub
     {
         var id = Guid.NewGuid().ToString("N");
         _sockets[id] = socket;
+        _contexts[id] = new ClientContext();
         try
         {
             await SendSystemAsync($"client:{id} connected", cancellationToken);
@@ -50,6 +53,7 @@ public class InMemoryChatHub : IChatHub
         finally
         {
             _sockets.TryRemove(id, out _);
+            _contexts.TryRemove(id, out _);
             if (socket.State != WebSocketState.Closed && socket.State != WebSocketState.Aborted)
             {
                 try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
@@ -86,4 +90,9 @@ public class InMemoryChatHub : IChatHub
 
     private Task SendSystemAsync(string text, CancellationToken cancellationToken)
         => BroadcastTextAsync(text, senderId: null, cancellationToken);
+
+    public class ClientContext
+    {
+        public string? ClientType;
+    }
 }
