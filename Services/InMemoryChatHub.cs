@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using CoreServer.Logic;
 using CoreServer.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CoreServer.Services;
 
@@ -12,11 +13,11 @@ public class InMemoryChatHub : IChatHub
     private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
     private readonly ConcurrentDictionary<string, ClientContext> _contexts = new();
     
-    private readonly IChatResponseHandler _chatResponseHandler;
+    private readonly IServiceProvider _serviceProvider;
 
-    public InMemoryChatHub(IChatResponseHandler chatResponseHandler)
+    public InMemoryChatHub(IServiceProvider serviceProvider)
     {
-        _chatResponseHandler = chatResponseHandler;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task HandleConnectionAsync(WebSocket socket, CancellationToken cancellationToken = default)
@@ -43,7 +44,8 @@ public class InMemoryChatHub : IChatHub
                     await BroadcastTextAsync(message, id, cancellationToken);
 
                     // 2) Build and send a server response as a separate system message
-                    var response = await _chatResponseHandler.BuildResponseAsync(message, id, cancellationToken);
+                    var handler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
+                    var response = await handler.BuildResponseAsync(message, id, cancellationToken);
                     if (!string.IsNullOrEmpty(response))
                     {
                         await SendSystemAsync(response, cancellationToken);
