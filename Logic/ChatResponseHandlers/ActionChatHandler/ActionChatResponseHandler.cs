@@ -21,31 +21,47 @@ public class ActionChatResponseHandler : IChatResponseHandler
 
         var text = message.Trim();
 
-        bool strict = text[0] == '/';
-        string strictTrigger = strict ? text.TrimStart('/').Split(' ')[0] : "";
-        foreach (var action in _actions)
+        bool strict = text.Length > 0 && text[0] == '/';
+
+        if (strict)
         {
-            if (strict && !string.IsNullOrEmpty(strictTrigger))
+            text = text.TrimStart('/');
+            if (!StrictCommand.TryParse(text, out var parsed) || parsed == null)
             {
-                var strictMatch = action.StrictPattern == strictTrigger;
-                if (strictMatch)
+                return "Invalid strict command format.";
+            }
+            var strictTrigger = parsed.Value.Trigger;
+
+            foreach (var action in _actions)
+            {
+                if (string.Equals(action.StrictPattern, strictTrigger, System.StringComparison.OrdinalIgnoreCase))
                 {
-                    var result = await action.ExecuteAsync(text.TrimStart('/'), clientId, cancellationToken).ConfigureAwait(false);
+                    var result = await action.ExecuteAsync(text, clientId, cancellationToken).ConfigureAwait(false);
                     return string.IsNullOrWhiteSpace(result) ? string.Empty : result!;
                 }
-
-                continue;
             }
-            
-            var match = action.Pattern.Match(text);
-            if (match.Success)
+
+            return "No matching action found.";
+        }
+        else
+        {
+            foreach (var action in _actions)
             {
-                var result = await action.ExecuteAsync(match, text, clientId, cancellationToken).ConfigureAwait(false);
-                return string.IsNullOrWhiteSpace(result) ? string.Empty : result!;
+                if (action.Pattern == null)
+                {
+                    continue; // strict-only action
+                }
+
+                var match = action.Pattern.Match(text);
+                if (match.Success)
+                {
+                    var result = await action.ExecuteAsync(match, text, clientId, cancellationToken).ConfigureAwait(false);
+                    return string.IsNullOrWhiteSpace(result) ? string.Empty : result!;
+                }
             }
         }
 
         // Fallback when no action matches
-        return strict ? "No matching action found." : "Message received.";
+        return "Message received.";
     }
 }

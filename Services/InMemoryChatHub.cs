@@ -3,6 +3,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using CoreServer.Logic;
+using CoreServer.Models;
 
 namespace CoreServer.Services;
 
@@ -91,8 +92,13 @@ public class InMemoryChatHub : IChatHub
     private Task SendSystemAsync(string text, CancellationToken cancellationToken)
         => BroadcastTextAsync(text, senderId: null, cancellationToken);
 
-    public class ClientContext
+    public ClientContext GetOrCreateContext(string clientId)
     {
-        public string? ClientType;
+        return _contexts.GetOrAdd(clientId, _ => new ClientContext());
+    }
+
+    public bool TryGetContext(string clientId, out ClientContext? context)
+    {
+        return _contexts.TryGetValue(clientId, out context);
     }
 }
