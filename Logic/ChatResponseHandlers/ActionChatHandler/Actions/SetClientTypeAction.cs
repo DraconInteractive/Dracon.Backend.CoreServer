@@ -30,41 +30,51 @@ public class SetClientTypeAction : IChatAction
     {
         // Strict syntax:
         // /client set type <type>
-        // Optional "to": /client set type to <type>
+        // /client get type
         if (!StrictCommand.TryParse(originalMessage, out var cmd) || cmd == null)
         {
             return Task.FromResult<string?>("Invalid command. Usage: /client set type <type>");
         }
 
         var tokens = cmd.Value.Args;
-        // Expected tokens (Args) after trigger: set type [to] <type>
-        if (tokens.Length < 3)
+        if (tokens.Length < 1)
         {
-            return Task.FromResult<string?>("Invalid command. Usage: /client set type <type>");
-        }
-        if (!string.Equals(tokens[0], "set", System.StringComparison.OrdinalIgnoreCase))
-        {
-            return Task.FromResult<string?>($"Unexpected argument {tokens[0]}. Usage: /client set type <type>");
-        }
-        if (!string.Equals(tokens[1], "type", System.StringComparison.OrdinalIgnoreCase))
-        {
-            return Task.FromResult<string?>($"Unexpected argument {tokens[1]}. Usage: /client set type <type>");
+            return Task.FromResult<string?>("Invalid command. Usage: /client set|get type <type>");
         }
 
-        int typeIdx = 2;
-        if (tokens.Length - typeIdx >= 2 && string.Equals(tokens[typeIdx], "to", System.StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(tokens[0], "set", StringComparison.OrdinalIgnoreCase) && !string.Equals(tokens[0], "get", StringComparison.OrdinalIgnoreCase))
         {
-            typeIdx++;
+            return Task.FromResult<string?>($"Unexpected argument {tokens[0]}. Usage: \n/client set type <type>\n/client get type");
         }
-        if (typeIdx >= tokens.Length)
-        {
-            return Task.FromResult<string?>("Invalid command. Usage: /client set type <type>");
-        }
-        var typeValue = tokens[typeIdx];
-
+        
         var ctx = _hub.GetOrCreateContext(clientId);
-        ctx.ClientType = typeValue;
-
-        return Task.FromResult<string?>("Client type updated");
+        
+        switch (tokens[0])
+        {
+            case "set":
+                if (tokens.Length < 3)
+                {
+                    return Task.FromResult<string?>("Invalid command. Usage: /client set|get type <type>");
+                }
+                if (!string.Equals(tokens[1], "type", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Task.FromResult<string?>($"Unexpected argument {tokens[1]}. Usage: \n/client set type <type>\n/client get type");
+                }
+                ctx.ClientType = tokens[2];
+                return Task.FromResult<string?>("Client type updated");
+            case "get":
+                if (tokens.Length < 2)
+                {
+                    return Task.FromResult<string?>("Invalid command. Usage: /client set|get type <type>");
+                }
+                if (!string.Equals(tokens[1], "type", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Task.FromResult<string?>($"Unexpected argument {tokens[1]}. Usage: \n/client set type <type>\n/client get type");
+                }
+                return Task.FromResult<string?>("Client type: " + ctx.ClientType);
+            default:
+                return Task.FromResult<string?>("Invalid command. Usage: \n/client set type <type>\n/client get type");
+                break;
+        }
     }
 }
