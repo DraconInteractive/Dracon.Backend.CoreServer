@@ -36,7 +36,7 @@ public class ActionChatResponseHandler : IChatResponseHandler
             {
                 if (string.Equals(action.StrictPattern, strictTrigger, System.StringComparison.OrdinalIgnoreCase))
                 {
-                    var result = await action.ExecuteAsync(text, clientId, cancellationToken).ConfigureAwait(false);
+                    var result = await action.ExecuteAsync(text, parsed.Value, clientId, cancellationToken).ConfigureAwait(false);
                     return string.IsNullOrWhiteSpace(result) ? string.Empty : result!;
                 }
             }

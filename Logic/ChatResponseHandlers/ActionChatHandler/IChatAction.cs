@@ -17,6 +17,7 @@ public interface IChatAction
 
     Task<string?> ExecuteAsync(
         string originalMessage,
+        StrictCommand command,
         string clientId,
         CancellationToken cancellationToken = default);
 }

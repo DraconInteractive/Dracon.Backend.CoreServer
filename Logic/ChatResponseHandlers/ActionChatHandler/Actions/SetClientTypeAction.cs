@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using CoreServer.Models;
 using CoreServer.Services;
 
 namespace CoreServer.Logic;
@@ -27,29 +28,26 @@ public class SetClientTypeAction : IChatAction
         return Task.FromResult<string?>(null);
     }
 
-    public Task<string?> ExecuteAsync(string originalMessage, string clientId, CancellationToken cancellationToken = default)
+    // Strict syntax:
+    // /client set type <type>
+    // /client get type
+    public Task<string?> ExecuteAsync(string originalMessage, StrictCommand command, string clientId, CancellationToken cancellationToken = default)
     {
-        // Strict syntax:
-        // /client set type <type>
-        // /client get type
-        if (!StrictCommand.TryParse(originalMessage, out var cmd) || cmd == null)
-        {
-            return Task.FromResult<string?>("Invalid command. Usage: /client set type <type>");
-        }
-
-        var tokens = cmd.Value.Args;
+        var tokens = command.Args;
         if (tokens.Length < 1)
         {
             return Task.FromResult<string?>("Invalid command. Usage: /client set|get type <type>");
         }
 
         var useJson = tokens.Contains("-j");
-        var invalidUsageJsonError = new ReturnPacket(clientId,
+        var invalidUsageJsonError = new JsonReturnPacket(clientId,
             $"Invalid argument(s). Usage: \n/client set type <type>\n/client get type", true);
 
-        var invalidUsageError = useJson ? JsonSerializer.Serialize(invalidUsageJsonError) : invalidUsageJsonError.Message;
-        
-        if (!string.Equals(tokens[0], "set", StringComparison.OrdinalIgnoreCase) && !string.Equals(tokens[0], "get", StringComparison.OrdinalIgnoreCase))
+        var invalidUsageError = useJson ? invalidUsageJsonError.GetJson() : invalidUsageJsonError.Message;
+
+        string[] validEntries = ["set", "get"];
+
+        if (!validEntries.Contains(tokens[0]))
         {
             return Task.FromResult(invalidUsageError);
         }
@@ -65,38 +63,22 @@ public class SetClientTypeAction : IChatAction
                 }
                 
                 ctx.ClientType = tokens[2];
-                var setReturn = JsonSerializer.Serialize(new SetReturnPacket(clientId, "Success", false, tokens[2]));
-                
-                return Task.FromResult<string?>(useJson ? setReturn : "Success");
+                return Task.FromResult<string?>(useJson ? new SetReturnPacket(clientId, "Success", false, tokens[2]).GetJson() : "Success");
             case "get":
                 if (tokens.Length < 2 || !string.Equals(tokens[1], "type", StringComparison.OrdinalIgnoreCase))
                 {
                     return Task.FromResult(invalidUsageError);
                 }
 
-                return Task.FromResult<string?>(useJson ? JsonSerializer.Serialize(new GetReturnPacket(clientId, "Success", false, tokens[2])) : "Success");
+                var type = ctx.ClientType;
+                return Task.FromResult<string?>(useJson ? new GetReturnPacket(clientId, "Success", false, type).GetJson() : "Success");
             default:
                 return Task.FromResult(invalidUsageError);
         }
     }
 
     [Serializable]
-    public class ReturnPacket
-    {
-        public string? ClientId { get; set; }
-        public string? Message { get; set; }
-        public bool Error { get; set; }
-
-        public ReturnPacket(string clientId, string message, bool error)
-        {
-            ClientId = clientId;
-            Message = message;
-            Error = error;
-        }
-    }
-
-    [Serializable]
-    public class SetReturnPacket : ReturnPacket
+    public class SetReturnPacket : JsonReturnPacket
     {
         public string? Type { get; set; }
 
@@ -108,7 +90,7 @@ public class SetClientTypeAction : IChatAction
     }
 
     [Serializable]
-    public class GetReturnPacket : ReturnPacket
+    public class GetReturnPacket : JsonReturnPacket
     {
         public string? Type { get; set; }
 

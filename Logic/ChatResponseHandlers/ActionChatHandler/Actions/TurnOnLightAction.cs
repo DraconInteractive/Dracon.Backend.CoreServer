@@ -31,7 +31,7 @@ public class TurnOnLightAction : IChatAction
         return Task.FromResult<string?>(response);
     }
 
-    public Task<string?> ExecuteAsync(string originalMessage, string clientId, CancellationToken cancellationToken = default)
+    public Task<string?> ExecuteAsync(string originalMessage, StrictCommand command, string clientId, CancellationToken cancellationToken = default)
     {
         // strict pattern example:
         // /togdev "bedroom 1" light on

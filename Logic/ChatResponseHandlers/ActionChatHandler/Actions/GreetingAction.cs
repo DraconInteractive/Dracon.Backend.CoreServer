@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using CoreServer.Models;
 
 namespace CoreServer.Logic;
 
@@ -26,9 +27,14 @@ public class GreetingAction : IChatAction
         return Task.FromResult<string?>(response);
     }
 
-    public Task<string?> ExecuteAsync(string originalMessage, string clientId, CancellationToken cancellationToken = default)
+    public Task<string?> ExecuteAsync(string originalMessage, StrictCommand command, string clientId, CancellationToken cancellationToken = default)
     {
         var response = $"Hello!";
+
+        if (command.Args.Length > 0 && command.Args.Contains("-j"))
+        {
+            response = new JsonReturnPacket(clientId, "Hello!", false).GetJson();
+        }
         return Task.FromResult<string?>(response);
     }
 }
