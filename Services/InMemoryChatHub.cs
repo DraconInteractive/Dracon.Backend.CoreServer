@@ -75,7 +75,7 @@ public class InMemoryChatHub : IChatHub
     public async Task BroadcastTextAsync(string message, string? senderId, ChatMessage.MessageType type = ChatMessage.MessageType.Message, CancellationToken cancellationToken = default)
     {
         var sender = senderId ?? "system";
-        var msgObj = new ChatMessage { senderId = sender, text = message, type = type, ts = DateTimeOffset.UtcNow };
+        var msgObj = new ChatMessage { Id = sender, Text = message, Type = type, TS = DateTimeOffset.UtcNow };
 
         // Store in history (keep only the most recent MaxHistory messages)
         lock (_historyLock)

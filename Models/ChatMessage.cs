@@ -10,8 +10,8 @@ public class ChatMessage
         Event
     }
     
-    public string senderId { get; set; } = string.Empty;
-    public MessageType type { get; set; }
-    public string text { get; set; } = string.Empty;
-    public DateTimeOffset ts { get; set; }
+    public string Id { get; set; } = string.Empty;
+    public MessageType Type { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public DateTimeOffset TS { get; set; }
 }
