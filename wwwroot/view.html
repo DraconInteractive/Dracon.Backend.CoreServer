@@ -21,6 +21,7 @@
     .sent { color: #0b5; }
     .recv { color: #06c; }
     .sys { color: #a50; }
+        .event { color: #c06; }
   </style>
 </head>
 <body>
@@ -32,6 +33,9 @@
       <input id="message" type="text" placeholder="Type a message…" />
       <button id="send" disabled>Send</button>
       <button id="disconnect" disabled title="Disconnect from server">Disconnect</button>
+      <label style="align-self:center; margin-left: 4px;">
+        <input type="checkbox" id="showRaw" /> Show Raw
+      </label>
     </div>
   </main>
   <script>
@@ -41,16 +45,78 @@
       const inputEl = document.getElementById('message');
       const sendBtn = document.getElementById('send');
       const discBtn = document.getElementById('disconnect');
+      const showRawCb = document.getElementById('showRaw');
 
-      function ts() {
+      // Store message entries so we can re-render on toggle
+      const entries = []; // { el: HTMLDivElement, data: ChatMessage }
+
+      function nowTime() {
         const d = new Date();
         return d.toLocaleTimeString();
+      }
+
+      function pad2(n) { return String(n).padStart(2, '0'); }
+      function fmtTimeFromTs(ts) {
+        try {
+          const d = new Date(ts);
+          if (isNaN(d.getTime())) return nowTime();
+          return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+        } catch { return nowTime(); }
+      }
+
+      function truncateId(id) {
+        if (!id) return '';
+        return id.substring(0, 8);
+      }
+
+      function renderMessageText(msg) {
+        const showRaw = !!showRawCb?.checked;
+        if (showRaw) {
+          try {
+            return JSON.stringify(msg);
+          } catch { return '[unrenderable item]'; }
+        }
+        const t = fmtTimeFromTs(msg?.TS ?? msg?.ts);
+        const id = truncateId(msg?.Id ?? msg?.id ?? '');
+        const text = msg?.Text ?? msg?.text ?? '';
+        return `[${t}] ${id}: ${text}`;
+      }
+
+      function classify(msg) {
+        // Type could be number (enum) or string; Event=1 (per server)
+        const type = (msg?.Type ?? msg?.type);
+        const isEvent = type === 1 || type === 'Event';
+        return isEvent ? 'recv event' : 'recv';
+      }
+
+      function appendRenderedMessage(msg) {
+        const div = document.createElement('div');
+        div.className = classify(msg);
+        const timeForPrefix = nowTime(); // we include timestamp inside formatted text when not raw
+        const content = renderMessageText(msg);
+        // In raw mode we still want a UI timestamp prefix
+        const showRaw = !!showRawCb?.checked;
+        div.textContent = showRaw ? `[${timeForPrefix}] ${content}` : content;
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+        entries.push({ el: div, data: msg });
+      }
+
+      function rerenderAll() {
+        for (const item of entries) {
+          const msg = item.data;
+          item.el.className = classify(msg);
+          const timeForPrefix = nowTime();
+          const content = renderMessageText(msg);
+          const showRaw = !!showRawCb?.checked;
+          item.el.textContent = showRaw ? `[${timeForPrefix}] ${content}` : content;
+        }
       }
 
       function log(kind, text) {
         const div = document.createElement('div');
         div.className = kind;
-        div.textContent = `[${ts()}] ${text}`;
+        div.textContent = `[${nowTime()}] ${text}`;
         logEl.appendChild(div);
         logEl.scrollTop = logEl.scrollHeight;
       }
@@ -72,18 +138,11 @@
             .then(data => {
               const items = Array.isArray(data?.messages) ? data.messages : [];
               if (items.length > 0) {
-                log('sys', `Loaded ${items.length} message(s) from history`);
+                //log('sys', `Loaded ${items.length} message(s) from history`);
+                log('sys', `Loaded history`);
                 for (const m of items) {
-                  // Render similarly to live messages; show as received
-                    // Here is where you could mark items as historical (or not as I am doing now)
-                  try {
-                    log('recv', `${JSON.stringify(m)}`);
-                  } catch {
-                    log('recv', '[unrenderable item]');
-                  }
+                  appendRenderedMessage(m);
                 }
-              } else {
-                // No history; do nothing
               }
             })
             .catch(() => {
@@ -93,22 +152,24 @@
           log('sys', 'Could not load chat history');
         }
       };
+
       ws.onmessage = (ev) => {
-        // Try to parse JSON, fallback to raw text
-        let msg = ev.data;
         try {
-          const o = JSON.parse(ev.data);
-          msg = JSON.stringify(o);
-        } catch {}
-        log('recv', `${msg}`);
+          const obj = JSON.parse(ev.data);
+          appendRenderedMessage(obj);
+        } catch {
+          // Non-JSON fallback
+          log('recv', String(ev.data));
+        }
       };
+
       ws.onclose = (ev) => {
         statusEl.textContent = `Disconnected (${ev.code})`;
         sendBtn.disabled = true;
         discBtn.disabled = true;
         log('sys', `WebSocket closed: code=${ev.code}`);
       };
-      ws.onerror = (ev) => {
+      ws.onerror = () => {
         log('sys', 'WebSocket error');
       };
 
@@ -136,6 +197,8 @@
       inputEl.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') sendCurrent();
       });
+
+      showRawCb?.addEventListener('change', rerenderAll);
     })();
   </script>
 </body>

@@ -33,7 +33,7 @@ public class InMemoryChatHub : IChatHub
         try
         {
             // Use non-canceling token for server/system broadcasts
-            await SendSystemEventAsync($"client connected: {id}");
+            await SendSystemEventAsync($"Client connected, id = {id}");
             
             var buffer = new byte[4 * 1024];
             while (socket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
@@ -68,13 +68,13 @@ public class InMemoryChatHub : IChatHub
                 try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
             }
             // Broadcast disconnect with non-canceling token
-            await SendSystemEventAsync($"client disconnected: {id}");
+            await SendSystemEventAsync($"Client disconnected, id = {id}");
         }
     }
     
     public async Task BroadcastTextAsync(string message, string? senderId, ChatMessage.MessageType type = ChatMessage.MessageType.Message, CancellationToken cancellationToken = default)
     {
-        var sender = senderId ?? "system";
+        var sender = senderId ?? "System";
         var msgObj = new ChatMessage { Id = sender, Text = message, Type = type, TS = DateTimeOffset.UtcNow };
 
         // Store in history (keep only the most recent MaxHistory messages)
