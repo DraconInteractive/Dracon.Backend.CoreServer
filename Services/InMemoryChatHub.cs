@@ -27,7 +27,8 @@ public class InMemoryChatHub : IChatHub
         _contexts[id] = new ClientContext();
         try
         {
-            await SendSystemAsync($"client:{id} connected", cancellationToken);
+            // Use non-canceling token for server/system broadcasts
+            await SendSystemAsync($"client:{id} connected");
 
             var buffer = new byte[4 * 1024];
             while (socket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
@@ -41,14 +42,14 @@ public class InMemoryChatHub : IChatHub
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     // 1) Echo/broadcast the original message to all clients (including sender)
-                    await BroadcastTextAsync(message, id, cancellationToken);
+                    await BroadcastTextAsync(message, id, CancellationToken.None);
 
                     // 2) Build and send a server response as a separate system message
                     var handler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
                     var response = await handler.BuildResponseAsync(message, id, cancellationToken);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        await SendSystemAsync(response, cancellationToken);
+                        await SendSystemAsync(response);
                     }
                 }
             }
@@ -61,7 +62,8 @@ public class InMemoryChatHub : IChatHub
             {
                 try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
             }
-            await SendSystemAsync($"client:{id} disconnected", cancellationToken);
+            // Broadcast disconnect with non-canceling token
+            await SendSystemAsync($"client:{id} disconnected");
         }
     }
 
@@ -79,7 +81,13 @@ public class InMemoryChatHub : IChatHub
             {
                 try
                 {
-                    await socket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken);
+                    // Use a non-canceling token for sends to decouple from per-request tokens
+                    await socket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Treat cancellation as a skipped send, do not close the socket
+                    continue;
                 }
                 catch
                 {
@@ -92,7 +100,11 @@ public class InMemoryChatHub : IChatHub
     }
 
     private Task SendSystemAsync(string text, CancellationToken cancellationToken)
-        => BroadcastTextAsync(text, senderId: null, cancellationToken);
+        => BroadcastTextAsync(text, senderId: null, CancellationToken.None);
+
+    // Overload without token for convenience and to avoid passing per-request tokens
+    private Task SendSystemAsync(string text)
+        => BroadcastTextAsync(text, senderId: null, CancellationToken.None);
 
     public ClientContext GetOrCreateContext(string clientId)
     {

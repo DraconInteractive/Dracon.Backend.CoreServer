@@ -11,7 +11,10 @@
     main { padding: 12px 16px; }
     #status { margin-bottom: 8px; font-size: 0.95rem; }
     #log { white-space: pre-wrap; border: 1px solid #8883; border-radius: 6px; padding: 8px; height: 300px; overflow: auto; background: #00000008; }
-    .row { display: flex; gap: 8px; margin-top: 10px; }
+    .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    /* Ensure inputs can shrink on small screens and buttons stay visible */
+    #message { min-width: 0; flex: 1 1 240px; }
+    .row > button { flex: 0 0 auto; }
     input[type=text] { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #8883; }
     button { padding: 8px 12px; border: 0; border-radius: 6px; background: #0b5; color: #fff; cursor: pointer; }
     button:disabled { background: #999; cursor: not-allowed; }
@@ -28,6 +31,7 @@
     <div class="row">
       <input id="message" type="text" placeholder="Type a message…" />
       <button id="send" disabled>Send</button>
+      <button id="disconnect" disabled title="Disconnect from server">Disconnect</button>
     </div>
   </main>
   <script>
@@ -36,6 +40,7 @@
       const statusEl = document.getElementById('status');
       const inputEl = document.getElementById('message');
       const sendBtn = document.getElementById('send');
+      const discBtn = document.getElementById('disconnect');
 
       function ts() {
         const d = new Date();
@@ -57,6 +62,7 @@
       ws.onopen = () => {
         statusEl.textContent = `Connected to ${wsUrl}`;
         sendBtn.disabled = false;
+        discBtn.disabled = false;
         inputEl.focus();
         log('sys', 'WebSocket open');
       };
@@ -72,6 +78,7 @@
       ws.onclose = (ev) => {
         statusEl.textContent = `Disconnected (${ev.code})`;
         sendBtn.disabled = true;
+        discBtn.disabled = true;
         log('sys', `WebSocket closed: code=${ev.code}`);
       };
       ws.onerror = (ev) => {
@@ -88,6 +95,17 @@
       }
 
       sendBtn.addEventListener('click', sendCurrent);
+      discBtn.addEventListener('click', () => {
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          log('sys', 'Disconnect requested by user');
+          statusEl.textContent = 'Disconnecting…';
+          sendBtn.disabled = true;
+          discBtn.disabled = true;
+          try {
+            ws.close(1000, 'User requested');
+          } catch {}
+        }
+      });
       inputEl.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') sendCurrent();
       });
