@@ -27,4 +27,4 @@ C:\Users\pmc10\Documents\Core AI\Core Server\obj\Debug\net9.0\CoreServer.pdb
 C:\Users\pmc10\Documents\Core AI\Core Server\obj\Debug\net9.0\CoreServer.genruntimeconfig.cache
 C:\Users\pmc10\Documents\Core AI\Core Server\obj\Debug\net9.0\ref\CoreServer.dll
 C:\Users\pmc10\Documents\Core AI\Core Server\bin\Debug\net9.0\CoreServer.staticwebassets.runtime.json
-C:\Users\pmc10\Documents\Core AI\Core Server\obj\Debug\net9.0\compressed\b19coknw5d-80gp5y5kr1.gz
+C:\Users\pmc10\Documents\Core AI\Core Server\obj\Debug\net9.0\compressed\b19coknw5d-8gchqlgf2w.gz

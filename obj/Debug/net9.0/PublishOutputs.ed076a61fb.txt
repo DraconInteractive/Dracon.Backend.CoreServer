@@ -1,0 +1,7 @@
+C:\Users\pmc10\AppData\Local\Temp\rider-publish17874804977874503369\CoreServer.exe
+C:\Users\pmc10\AppData\Local\Temp\rider-publish17874804977874503369\appsettings.Development.json
+C:\Users\pmc10\AppData\Local\Temp\rider-publish17874804977874503369\appsettings.json
+C:\Users\pmc10\AppData\Local\Temp\rider-publish17874804977874503369\CoreServer.dll
+C:\Users\pmc10\AppData\Local\Temp\rider-publish17874804977874503369\CoreServer.deps.json
+C:\Users\pmc10\AppData\Local\Temp\rider-publish17874804977874503369\CoreServer.runtimeconfig.json
+C:\Users\pmc10\AppData\Local\Temp\rider-publish17874804977874503369\CoreServer.pdb
