@@ -2,13 +2,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using CoreServer.Models;
 
 namespace CoreServer.Services;
 
 public interface IChatHub
 {
     Task HandleConnectionAsync(WebSocket socket, CancellationToken cancellationToken = default);
-    Task BroadcastTextAsync(string message, string? senderId, CancellationToken cancellationToken = default);
+    Task BroadcastTextAsync(string message, string? senderId, ChatMessage.MessageType type, CancellationToken cancellationToken = default);
 
     // History
     IReadOnlyList<CoreServer.Models.ChatMessage> GetHistory(int count = 20);

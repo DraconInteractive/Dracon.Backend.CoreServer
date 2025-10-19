@@ -33,8 +33,8 @@ public class InMemoryChatHub : IChatHub
         try
         {
             // Use non-canceling token for server/system broadcasts
-            await SendSystemAsync($"client:{id} connected");
-
+            await SendSystemEventAsync($"client connected: {id}");
+            
             var buffer = new byte[4 * 1024];
             while (socket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
             {
@@ -47,7 +47,7 @@ public class InMemoryChatHub : IChatHub
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     // 1) Echo/broadcast the original message to all clients (including sender)
-                    await BroadcastTextAsync(message, id, CancellationToken.None);
+                    await BroadcastTextAsync(message, id, cancellationToken: CancellationToken.None);
 
                     // 2) Build and send a server response as a separate system message
                     var handler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
@@ -68,15 +68,14 @@ public class InMemoryChatHub : IChatHub
                 try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
             }
             // Broadcast disconnect with non-canceling token
-            await SendSystemAsync($"client:{id} disconnected");
+            await SendSystemEventAsync($"client disconnected: {id}");
         }
     }
-
-    public async Task BroadcastTextAsync(string message, string? senderId, CancellationToken cancellationToken = default)
+    
+    public async Task BroadcastTextAsync(string message, string? senderId, ChatMessage.MessageType type = ChatMessage.MessageType.Message, CancellationToken cancellationToken = default)
     {
-        var sender = senderId is null ? "system" : "client";
-        var id = senderId ?? string.Empty;
-        var msgObj = new ChatMessage { sender = sender, id = id, text = message, ts = DateTimeOffset.UtcNow };
+        var sender = senderId ?? "system";
+        var msgObj = new ChatMessage { senderId = sender, text = message, type = type, ts = DateTimeOffset.UtcNow };
 
         // Store in history (keep only the most recent MaxHistory messages)
         lock (_historyLock)
@@ -117,13 +116,18 @@ public class InMemoryChatHub : IChatHub
         }
     }
 
-    private Task SendSystemAsync(string text, CancellationToken cancellationToken)
-        => BroadcastTextAsync(text, senderId: null, CancellationToken.None);
-
+    /*
+    private Task SendSystemAsync(string text, ChatMessage.MessageType type, CancellationToken cancellationToken)
+        => BroadcastTextAsync(text, senderId: null, type: type, CancellationToken.None);
+    */
+    
     // Overload without token for convenience and to avoid passing per-request tokens
-    private Task SendSystemAsync(string text)
-        => BroadcastTextAsync(text, senderId: null, CancellationToken.None);
+    private Task SendSystemAsync(string text, ChatMessage.MessageType type = ChatMessage.MessageType.Message)
+        => BroadcastTextAsync(text, senderId: null, type: type, CancellationToken.None);
 
+    private Task SendSystemEventAsync(string text)
+        => SendSystemAsync(text, ChatMessage.MessageType.Event);
+    
     public ClientContext GetOrCreateContext(string clientId)
     {
         return _contexts.GetOrAdd(clientId, _ => new ClientContext());
