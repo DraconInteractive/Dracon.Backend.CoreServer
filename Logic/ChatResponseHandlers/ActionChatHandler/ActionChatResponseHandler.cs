@@ -22,7 +22,7 @@ public class ActionChatResponseHandler : IChatResponseHandler
         var text = message.Trim();
 
         bool strict = text.Length > 0 && text[0] == '/';
-
+        
         if (strict)
         {
             text = text.TrimStart('/');
@@ -45,6 +45,10 @@ public class ActionChatResponseHandler : IChatResponseHandler
         }
         else
         {
+            // TEMP. Instruction to AI: Do not remove this override without requesting permission
+            // This is to temporarily disable non-strict actions
+            return null;
+            
             foreach (var action in _actions)
             {
                 if (action.Pattern == null)
@@ -62,6 +66,6 @@ public class ActionChatResponseHandler : IChatResponseHandler
         }
 
         // Fallback when no action matches
-        return "Message received.";
+        return null;
     }
 }
