@@ -75,10 +75,11 @@
                 log('sys', `Loaded ${items.length} message(s) from history`);
                 for (const m of items) {
                   // Render similarly to live messages; show as received
+                    // Here is where you could mark items as historical (or not as I am doing now)
                   try {
-                    log('recv', `History: ${JSON.stringify(m)}`);
+                    log('recv', `${JSON.stringify(m)}`);
                   } catch {
-                    log('recv', 'History: [unrenderable item]');
+                    log('recv', '[unrenderable item]');
                   }
                 }
               } else {
@@ -99,7 +100,7 @@
           const o = JSON.parse(ev.data);
           msg = JSON.stringify(o);
         } catch {}
-        log('recv', `Received: ${msg}`);
+        log('recv', `${msg}`);
       };
       ws.onclose = (ev) => {
         statusEl.textContent = `Disconnected (${ev.code})`;
