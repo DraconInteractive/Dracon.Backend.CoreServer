@@ -65,6 +65,32 @@
         discBtn.disabled = false;
         inputEl.focus();
         log('sys', 'WebSocket open');
+        // Fetch recent chat history and populate the log
+        try {
+          fetch('/chat/history')
+            .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to get history')))
+            .then(data => {
+              const items = Array.isArray(data?.messages) ? data.messages : [];
+              if (items.length > 0) {
+                log('sys', `Loaded ${items.length} message(s) from history`);
+                for (const m of items) {
+                  // Render similarly to live messages; show as received
+                  try {
+                    log('recv', `History: ${JSON.stringify(m)}`);
+                  } catch {
+                    log('recv', 'History: [unrenderable item]');
+                  }
+                }
+              } else {
+                // No history; do nothing
+              }
+            })
+            .catch(() => {
+              log('sys', 'Could not load chat history');
+            });
+        } catch {
+          log('sys', 'Could not load chat history');
+        }
       };
       ws.onmessage = (ev) => {
         // Try to parse JSON, fallback to raw text
