@@ -12,6 +12,11 @@ public class InMemoryChatHub : IChatHub
 {
     private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
     private readonly ConcurrentDictionary<string, ClientContext> _contexts = new();
+
+    // In-memory history of recent chat messages
+    private const int MaxHistory = 200; // store more than 20 so we can serve flexible counts
+    private readonly List<ChatMessage> _history = new();
+    private readonly object _historyLock = new();
     
     private readonly IServiceProvider _serviceProvider;
 
@@ -71,7 +76,20 @@ public class InMemoryChatHub : IChatHub
     {
         var sender = senderId is null ? "system" : "client";
         var id = senderId ?? string.Empty;
-        var payload = JsonSerializer.Serialize(new { sender, id, text = message, ts = DateTimeOffset.UtcNow });
+        var msgObj = new ChatMessage { sender = sender, id = id, text = message, ts = DateTimeOffset.UtcNow };
+
+        // Store in history (keep only the most recent MaxHistory messages)
+        lock (_historyLock)
+        {
+            _history.Add(msgObj);
+            if (_history.Count > MaxHistory)
+            {
+                var removeCount = _history.Count - MaxHistory;
+                _history.RemoveRange(0, removeCount);
+            }
+        }
+
+        var payload = JsonSerializer.Serialize(msgObj);
         var bytes = Encoding.UTF8.GetBytes(payload);
         var segment = new ArraySegment<byte>(bytes);
         foreach (var kvp in _sockets)
@@ -114,5 +132,15 @@ public class InMemoryChatHub : IChatHub
     public bool TryGetContext(string clientId, out ClientContext? context)
     {
         return _contexts.TryGetValue(clientId, out context);
+    }
+
+    public IReadOnlyList<ChatMessage> GetHistory(int count = 20)
+    {
+        lock (_historyLock)
+        {
+            var take = Math.Min(count, _history.Count);
+            if (take <= 0) return Array.Empty<ChatMessage>();
+            return _history.GetRange(_history.Count - take, take).ToArray();
+        }
     }
 }

@@ -36,6 +36,13 @@ app.MapPost("/register", (HttpRequest req, IRestApiService logic) =>
     return Results.NoContent();
 });
 
+// Chat history endpoint: returns last 20 messages from the main chat
+app.MapGet("/chat/history", (IChatHub hub) =>
+{
+    var messages = hub.GetHistory(20);
+    return Results.Ok(new { messages });
+});
+
 // WebSocket chat endpoint
 app.UseWebSockets();
 
