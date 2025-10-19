@@ -1,0 +1,599 @@
+{
+  "Version": 1,
+  "Hash": "yciak0JGLO6LHazZtDed7h7v5VO3nyR/iq1NhLd7qPo=",
+  "Source": "CoreServer",
+  "BasePath": "_content/CoreServer",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "CoreServer\\wwwroot",
+      "Source": "CoreServer",
+      "ContentRoot": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\",
+      "BasePath": "_content/CoreServer",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\b19coknw5d-abclasvkk9.gz",
+      "SourceId": "CoreServer",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/CoreServer",
+      "RelativePath": "view#[.{fingerprint=abclasvkk9}]?.html.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\view.html",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "kv085q33hf",
+      "Integrity": "kIxguGML3gfOvw2b1gBItgmHVFNeOAdihRCfqWg8AHM=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\view.html"
+    },
+    {
+      "Identity": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\publish\\b19coknw5d-abclasvkk9.br",
+      "SourceId": "CoreServer",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\publish\\",
+      "BasePath": "_content/CoreServer",
+      "RelativePath": "view#[.{fingerprint=abclasvkk9}]?.html.br",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\view.html",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "br",
+      "Fingerprint": "1r7hrivqdo",
+      "Integrity": "fTTSVj+b+ZpTq4FtnZ5d9F41ZP6raOK84F3r3OgliU8=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\view.html"
+    },
+    {
+      "Identity": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\view.html",
+      "SourceId": "CoreServer",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\",
+      "BasePath": "_content/CoreServer",
+      "RelativePath": "view#[.{fingerprint}]?.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "abclasvkk9",
+      "Integrity": "aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\view.html"
+    }
+  ],
+  "Endpoints": [
+    {
+      "Route": "view.abclasvkk9.html",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\b19coknw5d-abclasvkk9.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000695410292"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1437"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"kIxguGML3gfOvw2b1gBItgmHVFNeOAdihRCfqWg8AHM=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "abclasvkk9"
+        },
+        {
+          "Name": "label",
+          "Value": "view.html"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k="
+        }
+      ]
+    },
+    {
+      "Route": "view.abclasvkk9.html",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\publish\\b19coknw5d-abclasvkk9.br",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "br",
+          "Quality": "0.000932835821"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1071"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"fTTSVj+b+ZpTq4FtnZ5d9F41ZP6raOK84F3r3OgliU8=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "br"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "abclasvkk9"
+        },
+        {
+          "Name": "label",
+          "Value": "view.html"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k="
+        }
+      ]
+    },
+    {
+      "Route": "view.abclasvkk9.html",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\view.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "3453"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "abclasvkk9"
+        },
+        {
+          "Name": "label",
+          "Value": "view.html"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k="
+        }
+      ]
+    },
+    {
+      "Route": "view.abclasvkk9.html.br",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\publish\\b19coknw5d-abclasvkk9.br",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1071"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"fTTSVj+b+ZpTq4FtnZ5d9F41ZP6raOK84F3r3OgliU8=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "br"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "abclasvkk9"
+        },
+        {
+          "Name": "label",
+          "Value": "view.html.br"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-fTTSVj+b+ZpTq4FtnZ5d9F41ZP6raOK84F3r3OgliU8="
+        }
+      ]
+    },
+    {
+      "Route": "view.abclasvkk9.html.gz",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\b19coknw5d-abclasvkk9.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1437"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"kIxguGML3gfOvw2b1gBItgmHVFNeOAdihRCfqWg8AHM=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "abclasvkk9"
+        },
+        {
+          "Name": "label",
+          "Value": "view.html.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-kIxguGML3gfOvw2b1gBItgmHVFNeOAdihRCfqWg8AHM="
+        }
+      ]
+    },
+    {
+      "Route": "view.html",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\b19coknw5d-abclasvkk9.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000695410292"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1437"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"kIxguGML3gfOvw2b1gBItgmHVFNeOAdihRCfqWg8AHM=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k="
+        }
+      ]
+    },
+    {
+      "Route": "view.html",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\publish\\b19coknw5d-abclasvkk9.br",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "br",
+          "Quality": "0.000932835821"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1071"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"fTTSVj+b+ZpTq4FtnZ5d9F41ZP6raOK84F3r3OgliU8=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "br"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k="
+        }
+      ]
+    },
+    {
+      "Route": "view.html",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\wwwroot\\view.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "3453"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-aqRe4tAm2oiOltw8D7fITB7qFyq4jiBv88Y60e/IC/k="
+        }
+      ]
+    },
+    {
+      "Route": "view.html.br",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\publish\\b19coknw5d-abclasvkk9.br",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1071"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"fTTSVj+b+ZpTq4FtnZ5d9F41ZP6raOK84F3r3OgliU8=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "br"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-fTTSVj+b+ZpTq4FtnZ5d9F41ZP6raOK84F3r3OgliU8="
+        }
+      ]
+    },
+    {
+      "Route": "view.html.gz",
+      "AssetFile": "C:\\Users\\pmc10\\Documents\\Core AI\\Core Server\\obj\\Debug\\net9.0\\compressed\\b19coknw5d-abclasvkk9.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1437"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"kIxguGML3gfOvw2b1gBItgmHVFNeOAdihRCfqWg8AHM=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sat, 11 Oct 2025 12:38:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-kIxguGML3gfOvw2b1gBItgmHVFNeOAdihRCfqWg8AHM="
+        }
+      ]
+    }
+  ]
+}
