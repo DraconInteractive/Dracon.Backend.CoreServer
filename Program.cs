@@ -83,8 +83,8 @@ app.MapPost("/register", (HttpRequest req, IRestApiService logic) =>
 // Chat history endpoint: returns last 20 items; optional onlyMessages=true omits Event entries
 app.MapGet("/chat/history", (HttpRequest req, IChatHub hub) =>
 {
-    var onlyMessages = bool.TryParse(req.Query["onlyMessages"], out var flag) && flag;
-    var messages = hub.GetHistory(20, onlyMessages);
+    var includeEvents = bool.TryParse(req.Query["includeEvents"], out var flag) && flag;
+    var messages = hub.GetHistory(20, includeEvents);
     return Results.Ok(new { messages });
 });
 

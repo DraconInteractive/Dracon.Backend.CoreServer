@@ -12,7 +12,7 @@ public interface IChatHub
     Task BroadcastTextAsync(string message, string? senderId, ChatMessage.MessageType type, CancellationToken cancellationToken = default);
 
     // History
-    IReadOnlyList<CoreServer.Models.ChatMessage> GetHistory(int count = 20, bool onlyMessages = false);
+    IReadOnlyList<CoreServer.Models.ChatMessage> GetHistory(int count = 20, bool includeEvents = false);
 
     // Client context accessors
     CoreServer.Models.ClientContext GetOrCreateContext(string clientId);

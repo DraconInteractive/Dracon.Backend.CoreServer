@@ -133,7 +133,7 @@
         log('sys', 'WebSocket open');
         // Fetch recent chat history and populate the log
         try {
-          fetch('/chat/history?onlyMessages=true')
+          fetch('/chat/history?includeEvents=false')
             .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to get history')))
             .then(data => {
               const items = Array.isArray(data?.messages) ? data.messages : [];
