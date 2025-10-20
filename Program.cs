@@ -1,9 +1,37 @@
 using CoreServer.Logic;
 using CoreServer.Services;
-using System;
+using Azure.Identity;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using System.Text;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Attempt to fetch and merge config.json from Azure Blob Storage before building services
+var blobServiceUri = builder.Configuration["BlobServiceUri"];
+if (!string.IsNullOrWhiteSpace(blobServiceUri))
+{
+    try
+    {
+        var credential = new DefaultAzureCredential();
+        var tempBlobServiceClient = new BlobServiceClient(new Uri(blobServiceUri), credential);
+        var cfgContainer = builder.Configuration["ConfigContainerName"] ?? "config";
+        var cfgBlobName = builder.Configuration["ConfigBlobName"] ?? "config.json";
+        var cfgBlob = tempBlobServiceClient.GetBlobContainerClient(cfgContainer).GetBlobClient(cfgBlobName);
+        if (await cfgBlob.ExistsAsync())
+        {
+            var download = await cfgBlob.DownloadContentAsync();
+            var json = download.Value.Content.ToString();
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            builder.Configuration.AddJsonStream(ms);
+        }
+    }
+    catch
+    {
+        // Ignore config fetch errors; app will proceed with local configuration
+    }
+}
 
 // Register services and logic layer
 builder.Services.AddSingleton<IUserRegistry, InMemoryUserRegistry>();
@@ -22,6 +50,21 @@ foreach (var type in assembly.GetTypes())
 
 builder.Services.AddSingleton<IChatHub, InMemoryChatHub>();
 builder.Services.AddSingleton<IRestApiService, RestApiService>();
+
+// Register BlobServiceClient if configured
+blobServiceUri = builder.Configuration["BlobServiceUri"];
+if (!string.IsNullOrWhiteSpace(blobServiceUri))
+{
+    builder.Services.AddSingleton(new BlobServiceClient(new Uri(blobServiceUri), new DefaultAzureCredential()));
+    // background blob logger
+}
+else
+{
+    // still add background service but it will no-op if BlobServiceClient is null
+    builder.Services.AddSingleton<BlobServiceClient?>(_ => null);
+}
+
+builder.Services.AddHostedService<BlobLogBackgroundService>();
 
 var app = builder.Build();
 

@@ -10,7 +10,7 @@ public class ChatMessage
         Event
     }
     
-    public string Id { get; set; } = string.Empty;
+    public string ClientId { get; set; } = string.Empty;
     public MessageType Type { get; set; }
     public string Text { get; set; } = string.Empty;
     public DateTimeOffset TS { get; set; }
