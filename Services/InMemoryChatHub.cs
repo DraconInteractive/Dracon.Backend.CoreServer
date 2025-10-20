@@ -138,13 +138,30 @@ public class InMemoryChatHub : IChatHub
         return _contexts.TryGetValue(clientId, out context);
     }
 
-    public IReadOnlyList<ChatMessage> GetHistory(int count = 20)
+    public IReadOnlyList<ChatMessage> GetHistory(int count = 20, bool onlyMessages = false)
     {
         lock (_historyLock)
         {
-            var take = Math.Min(count, _history.Count);
-            if (take <= 0) return Array.Empty<ChatMessage>();
-            return _history.GetRange(_history.Count - take, take).ToArray();
+            if (_history.Count == 0 || count <= 0) return Array.Empty<ChatMessage>();
+
+            if (!onlyMessages)
+            {
+                var take = Math.Min(count, _history.Count);
+                return _history.GetRange(_history.Count - take, take).ToArray();
+            }
+
+            // When onlyMessages is true, collect the last `count` entries that are Message type
+            var result = new List<ChatMessage>(Math.Min(count, _history.Count));
+            for (int i = _history.Count - 1; i >= 0 && result.Count < count; i--)
+            {
+                var m = _history[i];
+                if (m.Type == ChatMessage.MessageType.Message)
+                {
+                    result.Add(m);
+                }
+            }
+            result.Reverse(); // chronological order
+            return result.ToArray();
         }
     }
 }

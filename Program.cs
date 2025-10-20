@@ -1,5 +1,6 @@
 using CoreServer.Logic;
 using CoreServer.Services;
+using CoreServer.Models;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -79,10 +80,11 @@ app.MapPost("/register", (HttpRequest req, IRestApiService logic) =>
     return Results.NoContent();
 });
 
-// Chat history endpoint: returns last 20 messages from the main chat
-app.MapGet("/chat/history", (IChatHub hub) =>
+// Chat history endpoint: returns last 20 items; optional onlyMessages=true omits Event entries
+app.MapGet("/chat/history", (HttpRequest req, IChatHub hub) =>
 {
-    var messages = hub.GetHistory(20);
+    var onlyMessages = bool.TryParse(req.Query["onlyMessages"], out var flag) && flag;
+    var messages = hub.GetHistory(20, onlyMessages);
     return Results.Ok(new { messages });
 });
 
