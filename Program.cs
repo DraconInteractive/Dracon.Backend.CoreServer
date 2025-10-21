@@ -27,11 +27,17 @@ if (!string.IsNullOrWhiteSpace(blobServiceUri))
             using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
             builder.Configuration.AddJsonStream(ms);
         }
+        Console.WriteLine("Config fetched");
     }
     catch
     {
         // Ignore config fetch errors; app will proceed with local configuration
+        Console.WriteLine("Proceeding with local config");
     }
+}
+else
+{
+    Console.WriteLine("No blob service URI provided");
 }
 
 // Register services and logic layer
@@ -72,12 +78,19 @@ var app = builder.Build();
 // REST API endpoints
 app.MapGet("/online", (IRestApiService logic) => Results.Ok(logic.OnlinePing()));
 app.MapGet("/version", (IRestApiService logic) => Results.Ok(logic.GetLatestVersion()));
-app.MapPost("/register", (HttpRequest req, IRestApiService logic) =>
+app.MapPost("/register/device", (HttpRequest req, IRestApiService logic) =>
 {
     var id = req.Query["id"].ToString();
     var name = req.Query["name"].ToString();
-    logic.Register(id, name); // intentionally left as a stub per requirements
-    return Results.NoContent();
+    logic.RegisterUser(id, name);
+    return Results.Ok();
+});
+app.MapPost("/register/user", (HttpRequest req, IRestApiService logic) =>
+{
+    var id = req.Query["id"].ToString();
+    var name = req.Query["name"].ToString();
+    logic.RegisterUser(id, name);
+    return Results.Ok();
 });
 
 // Chat history endpoint: returns last 20 items; optional onlyMessages=true omits Event entries
@@ -107,8 +120,15 @@ app.Map("/ws/chat", async (HttpContext context, IChatHub hub) =>
     }
 });
 
-// Optional root endpoint
-app.MapGet("/", () => "Core Server is running");
+// Root endpoint
+app.MapGet("/", () =>
+{
+    var asm = Assembly.GetExecutingAssembly();
+    var infoVer = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+    var asmVer = asm.GetName().Version?.ToString();
+    var version = !string.IsNullOrWhiteSpace(infoVer) ? infoVer : (asmVer ?? "unknown");
+    return $"Core Server is running (v{version})";
+});
 
 // Viewer page now served as a static file
 app.MapGet("/view", () => Results.Redirect("/view.html"));

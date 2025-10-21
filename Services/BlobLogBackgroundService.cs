@@ -37,6 +37,7 @@ public class BlobLogBackgroundService : BackgroundService
         }
         _interval = TimeSpan.FromMinutes(minutes);
         _lastTickUtc = DateTimeOffset.UtcNow;
+        Console.WriteLine($"Blob log background service initialised, interval: {minutes} minutes");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
