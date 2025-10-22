@@ -73,6 +73,22 @@ else
 
 builder.Services.AddHostedService<BlobLogBackgroundService>();
 
+// using System.Threading.RateLimiting; // Uncomment for rate limiting
+
+// builder.Services.AddRateLimiter(options =>
+// {
+//     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+//         RateLimitPartition.GetFixedWindowLimiter(
+//             partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
+//             factory: _ => new FixedWindowRateLimiterOptions
+//             {
+//                 AutoReplenishment = true,
+//                 PermitLimit = 10,
+//                 QueueLimit = 0,
+//                 Window = TimeSpan.FromSeconds(10)
+//             }));
+// });
+
 var app = builder.Build();
 
 // Initialize database objects for auth (no-op if not configured)
@@ -122,6 +138,16 @@ app.MapGet("/chat/history", (HttpRequest req, IChatHub hub) =>
     var messages = hub.GetHistory(20, includeEvents);
     return Results.Ok(new { messages });
 });
+
+// Enforce HTTPS/HSTS in production (uncomment to enable)
+// if (!app.Environment.IsDevelopment())
+// {
+//     app.UseHsts();
+// }
+// app.UseHttpsRedirection();
+
+// Enable rate limiting (uncomment along with AddRateLimiter above)
+// app.UseRateLimiter();
 
 // WebSocket chat endpoint
 app.UseWebSockets();
