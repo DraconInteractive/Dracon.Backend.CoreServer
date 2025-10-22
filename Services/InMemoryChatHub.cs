@@ -5,6 +5,7 @@ using System.Text.Json;
 using CoreServer.Logic;
 using CoreServer.Models;
 using Microsoft.Extensions.DependencyInjection;
+using CoreServer.Services;
 
 namespace CoreServer.Services;
 
@@ -45,13 +46,51 @@ public class InMemoryChatHub : IChatHub
                 }
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    // 1) Echo/broadcast the original message to all clients (including sender)
-                    await BroadcastTextAsync(message, id, cancellationToken: CancellationToken.None);
+                    var incoming = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    var outgoingText = incoming;
+                    var senderLabel = id;
+                    // Try parse JSON payload with optional token: { "text": "...", "token": "..." }
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(incoming);
+                        if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                        {
+                            if (doc.RootElement.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String)
+                            {
+                                outgoingText = textEl.GetString() ?? string.Empty;
+                            }
+                            if (doc.RootElement.TryGetProperty("token", out var tokenEl) && tokenEl.ValueKind == JsonValueKind.String)
+                            {
+                                var token = tokenEl.GetString();
+                                if (!string.IsNullOrWhiteSpace(token))
+                                {
+                                    var tokenService = _serviceProvider.GetService<ITokenService>();
+                                    var principal = tokenService?.ValidateToken(token!);
+                                    if (principal != null)
+                                    {
+                                        var ctx = GetOrCreateContext(id);
+                                        ctx.UserId = principal.FindFirst("sub")?.Value ?? principal.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+                                        ctx.UserName = principal.FindFirst("name")?.Value ?? principal.Identity?.Name;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // not JSON; treat as raw text
+                    }
+                    if (TryGetContext(id, out var context))
+                    {
+                        if (!string.IsNullOrWhiteSpace(context?.UserName)) senderLabel = context!.UserName!;
+                        else if (!string.IsNullOrWhiteSpace(context?.UserId)) senderLabel = context!.UserId!;
+                    }
+                    // 1) Echo/broadcast the text to all clients (including sender)
+                    await BroadcastTextAsync(outgoingText, senderLabel, cancellationToken: CancellationToken.None);
 
                     // 2) Build and send a server response as a separate system message
                     var handler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
-                    var response = await handler.BuildResponseAsync(message, id, cancellationToken);
+                    var response = await handler.BuildResponseAsync(outgoingText, id, cancellationToken);
                     if (!string.IsNullOrEmpty(response))
                     {
                         await SendSystemAsync(response);

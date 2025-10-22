@@ -5,6 +5,5 @@ public interface IRestApiService
     string OnlinePing();
     int GetLatestVersion();
     // Register is intentionally a stub for now per requirements.
-    void RegisterUser(string? id, string? name);
     void RegisterDevice(string? id, string? name, string? mac);
 }

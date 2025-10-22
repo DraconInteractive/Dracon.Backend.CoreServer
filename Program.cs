@@ -40,8 +40,6 @@ else
     Console.WriteLine("No blob service URI provided");
 }
 
-// Register services and logic layer
-builder.Services.AddSingleton<IUserRegistry, InMemoryUserRegistry>();
 builder.Services.AddSingleton<IChatResponseHandler, ActionChatResponseHandler>();
 
 // Register all chat actions automatically so every IChatAction is checked
@@ -57,6 +55,8 @@ foreach (var type in assembly.GetTypes())
 
 builder.Services.AddSingleton<IChatHub, InMemoryChatHub>();
 builder.Services.AddSingleton<IRestApiService, RestApiService>();
+builder.Services.AddSingleton<CoreServer.Services.IAuthService, CoreServer.Services.AuthService>();
+builder.Services.AddSingleton<CoreServer.Services.ITokenService, CoreServer.Services.TokenService>();
 
 // Register BlobServiceClient if configured
 blobServiceUri = builder.Configuration["BlobServiceUri"];
@@ -75,23 +75,45 @@ builder.Services.AddHostedService<BlobLogBackgroundService>();
 
 var app = builder.Build();
 
+// Initialize database objects for auth (no-op if not configured)
+var authInit = app.Services.GetRequiredService<CoreServer.Services.IAuthService>();
+await authInit.InitializeAsync();
+
 // REST API endpoints
 app.MapGet("/online", (IRestApiService logic) => Results.Ok(logic.OnlinePing()));
 app.MapGet("/version", (IRestApiService logic) => Results.Ok(logic.GetLatestVersion()));
+
+// Auth endpoints
+app.MapPost("/auth/register", async (HttpRequest req, CoreServer.Services.IAuthService auth) =>
+{
+    var body = await System.Text.Json.JsonSerializer.DeserializeAsync<RegisterRequest>(req.Body);
+    if (body is null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
+        return Results.BadRequest(new { error = "Email and Password are required" });
+    var (ok, error) = await auth.RegisterAsync(body.Email.Trim(), body.Password, body.DisplayName?.Trim());
+    if (!ok) return Results.Conflict(new { error });
+    return Results.Created("/auth/login", new { message = "Registered" });
+});
+
+app.MapPost("/auth/login", async (HttpRequest req, CoreServer.Services.IAuthService auth, CoreServer.Services.ITokenService tokens) =>
+{
+    var body = await System.Text.Json.JsonSerializer.DeserializeAsync<LoginRequest>(req.Body);
+    if (body is null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
+        return Results.BadRequest(new { error = "Email and Password are required" });
+    var (ok, userId, email, displayName, error) = await auth.LoginAsync(body.Email.Trim(), body.Password);
+    if (!ok || userId is null || email is null) return Results.Unauthorized();
+    var token = tokens.GenerateToken(userId, email, displayName);
+    return Results.Ok(new { token, userId, email, displayName });
+});
+
 app.MapPost("/register/device", (HttpRequest req, IRestApiService logic) =>
 {
     var id = req.Query["id"].ToString();
     var name = req.Query["name"].ToString();
-    logic.RegisterUser(id, name);
+    var mac = req.Query["mac"].ToString();
+    logic.RegisterDevice(id, name, mac);
     return Results.Ok();
 });
-app.MapPost("/register/user", (HttpRequest req, IRestApiService logic) =>
-{
-    var id = req.Query["id"].ToString();
-    var name = req.Query["name"].ToString();
-    logic.RegisterUser(id, name);
-    return Results.Ok();
-});
+
 
 // Chat history endpoint: returns last 20 items; optional onlyMessages=true omits Event entries
 app.MapGet("/chat/history", (HttpRequest req, IChatHub hub) =>
