@@ -55,11 +55,14 @@ public class InMemoryChatHub : IChatHub
                         using var doc = JsonDocument.Parse(incoming);
                         if (doc.RootElement.ValueKind == JsonValueKind.Object)
                         {
-                            if (doc.RootElement.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String)
+                            if (doc.RootElement.TryGetProperty("text", out var textEl) &&
+                                textEl.ValueKind == JsonValueKind.String)
                             {
                                 outgoingText = textEl.GetString() ?? string.Empty;
                             }
-                            if (doc.RootElement.TryGetProperty("token", out var tokenEl) && tokenEl.ValueKind == JsonValueKind.String)
+
+                            if (doc.RootElement.TryGetProperty("token", out var tokenEl) &&
+                                tokenEl.ValueKind == JsonValueKind.String)
                             {
                                 var token = tokenEl.GetString();
                                 if (!string.IsNullOrWhiteSpace(token))
@@ -69,45 +72,67 @@ public class InMemoryChatHub : IChatHub
                                     if (principal != null)
                                     {
                                         var ctx = GetOrCreateContext(id);
-                                        ctx.UserId = principal.FindFirst("sub")?.Value ?? principal.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+                                        ctx.UserId = principal.FindFirst("sub")?.Value ?? principal
+                                            .FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)
+                                            ?.Value;
                                         ctx.UserName = principal.FindFirst("name")?.Value ?? principal.Identity?.Name;
                                     }
                                 }
                             }
                         }
                     }
-                    catch
+                    catch (JsonException jEx)
                     {
-                        // not JSON; treat as raw text
+                        // ignore; will be treated as plain-text
                     }
+                    catch (OperationCanceledException opex)
+                    {
+                        // ignore; loop will check cancellation and exit if needed
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log and keep the socket alive
+                        Console.WriteLine($"[WS] Error processing message: {ex}");
+                        await SendSystemAsync($"An error occurred while processing your message. {ex}");
+                    }
+
                     if (TryGetContext(id, out var context))
                     {
                         if (!string.IsNullOrWhiteSpace(context?.UserName)) senderLabel = context!.UserName!;
                         else if (!string.IsNullOrWhiteSpace(context?.UserId)) senderLabel = context!.UserId!;
                     }
 
-                    // Build response from chat handler
-                    var chatHandler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
-                    var systemResponse = await chatHandler.BuildResponseAsync(outgoingText, id, cancellationToken);
-
-                    // Echo/broadcast the text to all clients (including sender)
-                    // If override exists, replace echo with this. Used for masking client side actions
-                    if (systemResponse.EchoOverride != null)
+                    try
                     {
-                        if (!string.IsNullOrEmpty(systemResponse.EchoOverride))
+                        // Build response from chat handler
+                        var chatHandler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
+                        var systemResponse = await chatHandler.BuildResponseAsync(outgoingText, id, cancellationToken);
+                        
+                        // Echo/broadcast the text to all clients (including sender)
+                        // If override exists, replace echo with this. Used for masking client side actions
+                        if (systemResponse?.EchoOverride != null)
                         {
-                            await BroadcastTextAsync(systemResponse.EchoOverride, senderLabel, cancellationToken: CancellationToken.None);
+                            if (!string.IsNullOrEmpty(systemResponse.EchoOverride))
+                            {
+                                await BroadcastTextAsync(systemResponse.EchoOverride, senderLabel, cancellationToken: CancellationToken.None);
+                            }
+                        }
+                        else
+                        {
+                            await BroadcastTextAsync(outgoingText, senderLabel, cancellationToken: CancellationToken.None);
+                        }
+                    
+                        // Send built response
+                        if (!string.IsNullOrEmpty(systemResponse?.ResponseText))
+                        {
+                            await SendSystemAsync(systemResponse.ResponseText);
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        await BroadcastTextAsync(outgoingText, senderLabel, cancellationToken: CancellationToken.None);
-                    }
-                    
-                    // Send built response
-                    if (!string.IsNullOrEmpty(systemResponse.ResponseText))
-                    {
-                        await SendSystemAsync(systemResponse.ResponseText);
+                        // Log and keep the socket alive
+                        Console.WriteLine($"[WS] Error building response message: {ex}");
+                        await SendSystemAsync($"An error occurred while building your response. {ex}");
                     }
                 }
             }

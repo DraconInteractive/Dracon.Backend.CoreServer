@@ -22,7 +22,10 @@ public class TokenService : ITokenService
     public TokenService(IConfiguration config)
     {
         _config = config;
-        var key = _config["Jwt:Key"] ?? "dev-very-secret-key-change-me-please"; // dev fallback
+        var key = _config["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException("JWT signing key (Jwt:Key) must be configured.");
+        
         var issuer = _config["Jwt:Issuer"] ?? "CoreServer";
         var audience = _config["Jwt:Audience"] ?? "CoreServerClients";
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
