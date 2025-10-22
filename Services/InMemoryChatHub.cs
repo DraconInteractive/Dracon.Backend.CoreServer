@@ -93,7 +93,7 @@ public class InMemoryChatHub : IChatHub
                     {
                         // Log and keep the socket alive
                         Console.WriteLine($"[WS] Error processing message: {ex}");
-                        await SendSystemAsync($"An error occurred while processing your message. {ex}");
+                        await SendSystemAsync($"An error occurred while processing your message: {ex}", ChatMessage.MessageType.Message, id);
                     }
 
                     if (TryGetContext(id, out var context))
@@ -125,14 +125,14 @@ public class InMemoryChatHub : IChatHub
                         // Send built response
                         if (!string.IsNullOrEmpty(systemResponse?.ResponseText))
                         {
-                            await SendSystemAsync(systemResponse.ResponseText);
+                            await SendSystemAsync(systemResponse.ResponseText, ChatMessage.MessageType.Message, id);
                         }
                     }
                     catch (Exception ex)
                     {
                         // Log and keep the socket alive
                         Console.WriteLine($"[WS] Error building response message: {ex}");
-                        await SendSystemAsync($"An error occurred while building your response. {ex}");
+                        await SendSystemAsync($"An error occurred while building your response: {ex}", ChatMessage.MessageType.Message, id);
                     }
                 }
             }
@@ -199,9 +199,43 @@ public class InMemoryChatHub : IChatHub
         => BroadcastTextAsync(text, senderId: null, type: type, CancellationToken.None);
     */
     
-    // Overload without token for convenience and to avoid passing per-request tokens
-    private Task SendSystemAsync(string text, ChatMessage.MessageType type = ChatMessage.MessageType.Message)
-        => BroadcastTextAsync(text, senderId: null, type: type, CancellationToken.None);
+    // Targeted send to a single client (does not add to public history)
+    private async Task SendToClientAsync(string clientId, string text, ChatMessage.MessageType type = ChatMessage.MessageType.Message)
+    {
+        if (_sockets.TryGetValue(clientId, out var socket) && socket.State == WebSocketState.Open)
+        {
+            var msgObj = new ChatMessage { ClientId = "System", Text = text, Type = type, TS = DateTimeOffset.UtcNow };
+            var payload = JsonSerializer.Serialize(msgObj);
+            var bytes = Encoding.UTF8.GetBytes(payload);
+            try
+            {
+                await socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch (OperationCanceledException)
+            {
+                // ignore
+            }
+            catch
+            {
+                try { await socket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Send failed", CancellationToken.None); } catch { }
+                // Remove broken socket
+                foreach (var kvp in _sockets)
+                {
+                    if (ReferenceEquals(kvp.Value, socket)) { _sockets.TryRemove(kvp.Key, out _); break; }
+                }
+            }
+        }
+    }
+
+    // System message helper: if targetClientId provided, send privately; otherwise broadcast to all
+    private Task SendSystemAsync(string text, ChatMessage.MessageType type = ChatMessage.MessageType.Message, string? targetClientId = null)
+    {
+        if (!string.IsNullOrEmpty(targetClientId))
+        {
+            return SendToClientAsync(targetClientId, text, type);
+        }
+        return BroadcastTextAsync(text, senderId: null, type: type, CancellationToken.None);
+    }
 
     private Task SendSystemEventAsync(string text)
         => SendSystemAsync(text, ChatMessage.MessageType.Event);
