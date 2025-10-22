@@ -1,13 +1,14 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using CoreServer.Models;
 
 namespace CoreServer.Logic;
 
 public class DefaultChatResponseHandler : IChatResponseHandler
 {
-    public Task<string> BuildResponseAsync(string message, string clientId, CancellationToken cancellationToken = default)
+    public Task<ChatResponse> BuildResponseAsync(string message, string clientId, CancellationToken cancellationToken = default)
     {
         // Simple default implementation returns a static acknowledgement
-        return Task.FromResult("received");
+        return Task.FromResult(new ChatResponse("<<>>"));
     }
 }

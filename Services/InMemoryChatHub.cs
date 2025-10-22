@@ -85,15 +85,29 @@ public class InMemoryChatHub : IChatHub
                         if (!string.IsNullOrWhiteSpace(context?.UserName)) senderLabel = context!.UserName!;
                         else if (!string.IsNullOrWhiteSpace(context?.UserId)) senderLabel = context!.UserId!;
                     }
-                    // 1) Echo/broadcast the text to all clients (including sender)
-                    await BroadcastTextAsync(outgoingText, senderLabel, cancellationToken: CancellationToken.None);
 
-                    // 2) Build and send a server response as a separate system message
-                    var handler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
-                    var response = await handler.BuildResponseAsync(outgoingText, id, cancellationToken);
-                    if (!string.IsNullOrEmpty(response))
+                    // Build response from chat handler
+                    var chatHandler = _serviceProvider.GetRequiredService<IChatResponseHandler>();
+                    var systemResponse = await chatHandler.BuildResponseAsync(outgoingText, id, cancellationToken);
+
+                    // Echo/broadcast the text to all clients (including sender)
+                    // If override exists, replace echo with this. Used for masking client side actions
+                    if (systemResponse.EchoOverride != null)
                     {
-                        await SendSystemAsync(response);
+                        if (!string.IsNullOrEmpty(systemResponse.EchoOverride))
+                        {
+                            await BroadcastTextAsync(systemResponse.EchoOverride, senderLabel, cancellationToken: CancellationToken.None);
+                        }
+                    }
+                    else
+                    {
+                        await BroadcastTextAsync(outgoingText, senderLabel, cancellationToken: CancellationToken.None);
+                    }
+                    
+                    // Send built response
+                    if (!string.IsNullOrEmpty(systemResponse.ResponseText))
+                    {
+                        await SendSystemAsync(systemResponse.ResponseText);
                     }
                 }
             }

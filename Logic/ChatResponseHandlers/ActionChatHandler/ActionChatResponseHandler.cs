@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using CoreServer.Models;
 
 namespace CoreServer.Logic;
 
@@ -14,10 +15,10 @@ public class ActionChatResponseHandler : IChatResponseHandler
         _actions = actions.ToArray();
     }
 
-    public async Task<string> BuildResponseAsync(string message, string clientId, CancellationToken cancellationToken = default)
+    public async Task<ChatResponse> BuildResponseAsync(string message, string clientId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(message))
-            return string.Empty;
+            return new ChatResponse(string.Empty);
 
         var text = message.Trim();
 
@@ -28,7 +29,7 @@ public class ActionChatResponseHandler : IChatResponseHandler
             text = text.TrimStart('/');
             if (!StrictCommand.TryParse(text, out var parsed) || parsed == null)
             {
-                return "Invalid strict command format.";
+                return new ChatResponse("Invalid strict command format.");
             }
             var strictTrigger = parsed.Value.Trigger;
 
@@ -37,11 +38,11 @@ public class ActionChatResponseHandler : IChatResponseHandler
                 if (string.Equals(action.StrictPattern, strictTrigger, System.StringComparison.OrdinalIgnoreCase))
                 {
                     var result = await action.ExecuteAsync(text, parsed.Value, clientId, cancellationToken).ConfigureAwait(false);
-                    return string.IsNullOrWhiteSpace(result) ? string.Empty : result!;
+                    return new ChatResponse(string.IsNullOrWhiteSpace(result) ? string.Empty : result!, "/" + strictTrigger);
                 }
             }
 
-            return "No matching action found.";
+            return new ChatResponse("No matching action found.");
         }
         else
         {
@@ -60,7 +61,7 @@ public class ActionChatResponseHandler : IChatResponseHandler
                 if (match.Success)
                 {
                     var result = await action.ExecuteAsync(match, text, clientId, cancellationToken).ConfigureAwait(false);
-                    return string.IsNullOrWhiteSpace(result) ? string.Empty : result!;
+                    return new ChatResponse(string.IsNullOrWhiteSpace(result) ? string.Empty : result!);
                 }
             }
         }
