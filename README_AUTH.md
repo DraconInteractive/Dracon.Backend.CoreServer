@@ -1,44 +1,60 @@
-﻿User Management and Azure SQL Setup
+﻿# User Management and Azure SQL Setup
 
-This project now includes basic user management via REST API and JWT-based identity tokens that can be included in chat packets.
+This project includes basic user management via REST API and JWT-based identity tokens that can be included in chat packets. DisplayName is the unique identifier; Email is optional.
 
-Important: DisplayName is now the unique identifier for accounts. Email is optional.
-
-1) REST API Endpoints
+## 1) REST API Endpoints
 - POST /auth/register
-  Body (JSON): { "displayName": "Alice", "password": "P@ssw0rd!", "email": "user@example.com" }
-  Notes: displayName and password are required; email is optional.
-  Response: 201 Created on success.
+  - Body (JSON):
+    { "displayName": "Alice", "password": "P@ssw0rd!", "email": "user@example.com" }
+  - Notes: displayName and password are required; email is optional.
+  - Response: 201 Created on success.
 
 - POST /auth/login
-  Body (JSON): { "displayName": "Alice", "password": "P@ssw0rd!" }
-  Response: 200 OK with { token, userId, email, displayName }
+  - Body (JSON):
+    { "displayName": "Alice", "password": "P@ssw0rd!" }
+  - Response: 200 OK with
+    { "token": "<JWT>", "userId": "<guid>", "email": "user@example.com", "displayName": "Alice" }
 
-Include the returned token in WebSocket chat messages as JSON:
-{ "text": "hello world", "token": "<JWT token>" }
-The server will validate the token and tag messages with the authenticated user (displayName or userId) instead of the raw socket id.
+Include the returned token in WebSocket chat messages as JSON to tag your messages with identity:
+{ "text": "hello world", "token": "<JWT>" }
 
-2) Configuration
-Edit appsettings.json (or provide via environment variables/config blob) and set:
+## 2) Configuration
+You can configure via appsettings.json, environment variables, or Azure App Service Configuration.
 
-ConnectionStrings:Default
-  Example (SQL auth):
-  Server=tcp:YOUR_SERVER.database.windows.net,1433;Initial Catalog=YOUR_DB;Persist Security Info=False;User ID=YOUR_USER;Password=YOUR_PASSWORD;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+- ConnectionStrings:Default
+  - SQL auth example:
+    Server=tcp:YOUR_SERVER.database.windows.net,1433;Initial Catalog=YOUR_DB;User ID=YOUR_USER;Password=YOUR_PASSWORD;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+  - Managed Identity / Entra ID example:
+    Server=tcp:YOUR_SERVER.database.windows.net,1433;Initial Catalog=YOUR_DB;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
 
-Jwt:
-  Issuer: CoreServer (or your issuer)
-  Audience: CoreServerClients (or your audience)
-  Key: a strong 256-bit secret (minimum 32 random bytes). Example: generate one and store in a secret store.
+- Jwt:
+  - Issuer: CoreServer (or your issuer)
+  - Audience: CoreServerClients (or your audience)
+  - Key: a strong 256-bit secret (minimum 32 random bytes). Provide via environment or Azure App Settings.
 
-3) Azure SQL Quick Setup
-- Create Azure SQL Server and Database (Basic/General Purpose is fine).
-- Allow your app’s outbound IP or enable Azure services to connect.
-- Create a SQL login (or use AAD if you extend the app for it). For SQL login:
-  - In Azure Portal → your SQL server → Reset password or create a new login.
-- Configure a firewall rule to allow your development machine or hosting environment.
-- In the database, no manual schema setup required. On startup, the app ensures table dbo.Users exists.
+### Azure App Service settings
+- Connection strings → New connection string:
+  - Name: Default (matches GetConnectionString("Default"))
+  - Type: SQLAzure
+  - Value: your connection string
+- Application settings:
+  - Jwt__Issuer, Jwt__Audience, Jwt__Key
 
-Table schema created automatically (new installs only):
+## 3) Azure SQL Quick Setup
+- Create Azure SQL Server and Database.
+- If using Managed Identity with App Service:
+  1. Enable the App Service Managed Identity (System-assigned or attach a UAMI).
+  2. Set an Entra ID admin on the SQL Server.
+  3. In the user database (not master), create the user and grant permissions (first run):
+     CREATE USER [<app-service-name-or-uami-name>] FROM EXTERNAL PROVIDER;
+     ALTER ROLE db_owner ADD MEMBER [<app-service-name-or-uami-name>];
+     After the first run (schema created), reduce privileges to least privilege (e.g., db_datareader/db_datawriter).
+- If using SQL authentication, ensure your login has access to the database.
+
+## 4) Schema creation (new installs only)
+On startup, the app ensures the dbo.Users table and unique index on DisplayName exist. There is no automatic migration of older schemas.
+
+Schema:
 CREATE TABLE dbo.Users (
   Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
   DisplayName NVARCHAR(256) NOT NULL,
@@ -49,19 +65,15 @@ CREATE TABLE dbo.Users (
 );
 CREATE UNIQUE INDEX IX_Users_DisplayName ON dbo.Users(DisplayName);
 
-4) Security Notes
-- Replace Jwt:Key with a long, random secret (at least 32 bytes). Do NOT commit real keys.
-- Use Azure Key Vault or environment variables for secrets.
-- Use HTTPS in production.
-- Consider account lockouts, password complexity, email verification, refresh tokens, and token expiry policies for production.
+## 5) Security Notes
+- Use a long, random Jwt:Key (32+ bytes). Do NOT commit real keys.
+- Prefer HTTPS in production (App Service HTTPS Only). Rate limiting and HTTPS enforcement samples are present in Program.cs (commented out).
+- System/action responses in the WebSocket hub are targeted to the requesting client to avoid leaking sensitive data.
+- Consider account lockouts, password complexity, email verification, and shorter token lifetimes for production.
 
-5) Local Testing (examples)
-- Register: curl -X POST http://localhost:5000/auth/register -H "Content-Type: application/json" -d "{\"email\":\"user@example.com\",\"password\":\"P@ssw0rd!\",\"displayName\":\"Alice\"}"
-- Login: curl -X POST http://localhost:5000/auth/login -H "Content-Type: application/json" -d "{\"email\":\"user@example.com\",\"password\":\"P@ssw0rd!\"}"
-- WebSocket Chat: send {"text":"hi","token":"<token>"} instead of a raw string to tag messages with identity.
-
-6) Deployment Notes
-- If using Azure App Service, set the following settings in Configuration:
-  - ConnectionStrings__Default
-  - Jwt__Issuer, Jwt__Audience, Jwt__Key
-- If you use Config from Azure Blob (already supported by the app), you can also store these keys in that JSON file and reference it via BlobServiceUri, ConfigContainerName, ConfigBlobName.
+## 6) Local Testing (examples)
+- Register:
+  curl -X POST http://localhost:5000/auth/register -H "Content-Type: application/json" -d '{"displayName":"Alice","password":"P@ssw0rd!","email":"user@example.com"}'
+- Login:
+  curl -X POST http://localhost:5000/auth/login -H "Content-Type: application/json" -d '{"displayName":"Alice","password":"P@ssw0rd!"}'
+- WebSocket Chat: send {"text":"hi","token":"<token>"} to tag messages with identity.
