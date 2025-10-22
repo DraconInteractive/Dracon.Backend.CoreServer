@@ -2,13 +2,16 @@
 
 This project now includes basic user management via REST API and JWT-based identity tokens that can be included in chat packets.
 
+Important: DisplayName is now the unique identifier for accounts. Email is optional.
+
 1) REST API Endpoints
 - POST /auth/register
-  Body (JSON): { "email": "user@example.com", "password": "P@ssw0rd!", "displayName": "Alice" }
+  Body (JSON): { "displayName": "Alice", "password": "P@ssw0rd!", "email": "user@example.com" }
+  Notes: displayName and password are required; email is optional.
   Response: 201 Created on success.
 
 - POST /auth/login
-  Body (JSON): { "email": "user@example.com", "password": "P@ssw0rd!" }
+  Body (JSON): { "displayName": "Alice", "password": "P@ssw0rd!" }
   Response: 200 OK with { token, userId, email, displayName }
 
 Include the returned token in WebSocket chat messages as JSON:
@@ -35,15 +38,16 @@ Jwt:
 - Configure a firewall rule to allow your development machine or hosting environment.
 - In the database, no manual schema setup required. On startup, the app ensures table dbo.Users exists.
 
-Table schema created automatically:
+Table schema created automatically (new installs only):
 CREATE TABLE dbo.Users (
   Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-  Email NVARCHAR(256) NOT NULL UNIQUE,
-  DisplayName NVARCHAR(256) NULL,
+  DisplayName NVARCHAR(256) NOT NULL,
+  Email NVARCHAR(256) NULL,
   PasswordHash VARBINARY(512) NOT NULL,
   PasswordSalt VARBINARY(128) NOT NULL,
   CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+CREATE UNIQUE INDEX IX_Users_DisplayName ON dbo.Users(DisplayName);
 
 4) Security Notes
 - Replace Jwt:Key with a long, random secret (at least 32 bytes). Do NOT commit real keys.

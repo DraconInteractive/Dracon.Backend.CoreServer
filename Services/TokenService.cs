@@ -8,7 +8,7 @@ namespace CoreServer.Services;
 
 public interface ITokenService
 {
-    string GenerateToken(string userId, string email, string? displayName = null, TimeSpan? lifetime = null);
+    string GenerateToken(string userId, string? email, string displayName, TimeSpan? lifetime = null);
     ClaimsPrincipal? ValidateToken(string token, bool validateLifetime = true);
 }
 
@@ -40,7 +40,7 @@ public class TokenService : ITokenService
         };
     }
 
-    public string GenerateToken(string userId, string email, string? displayName = null, TimeSpan? lifetime = null)
+    public string GenerateToken(string userId, string? email, string displayName, TimeSpan? lifetime = null)
     {
         var issuer = _config["Jwt:Issuer"] ?? "CoreServer";
         var audience = _config["Jwt:Audience"] ?? "CoreServerClients";
@@ -48,9 +48,12 @@ public class TokenService : ITokenService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId),
-            new(JwtRegisteredClaimNames.Email, email),
-            new("name", displayName ?? email)
+            new("name", displayName)
         };
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, email!));
+        }
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,

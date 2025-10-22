@@ -1,4 +1,4 @@
 ﻿namespace CoreServer.Models;
 
-public record RegisterRequest(string Email, string Password, string? DisplayName);
-public record LoginRequest(string Email, string Password);
+public record RegisterRequest(string DisplayName, string Password, string? Email);
+public record LoginRequest(string DisplayName, string Password);

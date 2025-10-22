@@ -84,23 +84,23 @@ app.MapGet("/online", (IRestApiService logic) => Results.Ok(logic.OnlinePing()))
 app.MapGet("/version", (IRestApiService logic) => Results.Ok(logic.GetLatestVersion()));
 
 // Auth endpoints
-app.MapPost("/auth/register", async (HttpRequest req, CoreServer.Services.IAuthService auth) =>
+app.MapPost("/auth/register", async (HttpRequest req, IAuthService auth) =>
 {
     var body = await System.Text.Json.JsonSerializer.DeserializeAsync<RegisterRequest>(req.Body);
-    if (body is null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
-        return Results.BadRequest(new { error = "Email and Password are required" });
-    var (ok, error) = await auth.RegisterAsync(body.Email.Trim(), body.Password, body.DisplayName?.Trim());
+    if (body is null || string.IsNullOrWhiteSpace(body.DisplayName) || string.IsNullOrWhiteSpace(body.Password))
+        return Results.BadRequest(new { error = "DisplayName and Password are required" });
+    var (ok, error) = await auth.RegisterAsync(body.DisplayName.Trim(), body.Password, body.Email?.Trim());
     if (!ok) return Results.Conflict(new { error });
     return Results.Created("/auth/login", new { message = "Registered" });
 });
 
-app.MapPost("/auth/login", async (HttpRequest req, CoreServer.Services.IAuthService auth, CoreServer.Services.ITokenService tokens) =>
+app.MapPost("/auth/login", async (HttpRequest req, IAuthService auth, ITokenService tokens) =>
 {
     var body = await System.Text.Json.JsonSerializer.DeserializeAsync<LoginRequest>(req.Body);
-    if (body is null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
-        return Results.BadRequest(new { error = "Email and Password are required" });
-    var (ok, userId, email, displayName, error) = await auth.LoginAsync(body.Email.Trim(), body.Password);
-    if (!ok || userId is null || email is null) return Results.Unauthorized();
+    if (body is null || string.IsNullOrWhiteSpace(body.DisplayName) || string.IsNullOrWhiteSpace(body.Password))
+        return Results.BadRequest(new { error = "DisplayName and Password are required" });
+    var (ok, userId, email, displayName, error) = await auth.LoginAsync(body.DisplayName.Trim(), body.Password);
+    if (!ok || userId is null || string.IsNullOrWhiteSpace(displayName)) return Results.Unauthorized();
     var token = tokens.GenerateToken(userId, email, displayName);
     return Results.Ok(new { token, userId, email, displayName });
 });
