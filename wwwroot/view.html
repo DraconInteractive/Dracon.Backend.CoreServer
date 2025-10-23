@@ -77,7 +77,7 @@
           } catch { return '[unrenderable item]'; }
         }
         const t = fmtTimeFromTs(msg?.TS ?? msg?.ts);
-        const id = truncateId(msg?.Id ?? msg?.id ?? '');
+        const id = truncateId(msg?.ClientId ?? msg?.clientId ?? msg?.Id ?? msg?.id ?? '');
         const text = msg?.Text ?? msg?.text ?? '';
         return `[${t}] ${id}: ${text}`;
       }
