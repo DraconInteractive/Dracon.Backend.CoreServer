@@ -71,7 +71,7 @@ public class SetClientTypeAction : IChatAction
                 }
 
                 var type = ctx.ClientType;
-                return Task.FromResult<string?>(useJson ? new GetReturnPacket(clientId, "Success", false, type).GetJson() : "Success");
+                return Task.FromResult<string?>(useJson ? new GetReturnPacket(clientId, $"Success: {type}", false, type).GetJson() : $"Success: {type}");
             default:
                 return Task.FromResult(invalidUsageError);
         }
