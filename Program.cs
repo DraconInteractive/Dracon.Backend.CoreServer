@@ -9,36 +9,6 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Attempt to fetch and merge config.json from Azure Blob Storage before building services
-var blobServiceUri = builder.Configuration["BlobServiceUri"];
-if (!string.IsNullOrWhiteSpace(blobServiceUri))
-{
-    try
-    {
-        var credential = new DefaultAzureCredential();
-        var tempBlobServiceClient = new BlobServiceClient(new Uri(blobServiceUri), credential);
-        var cfgContainer = builder.Configuration["ConfigContainerName"] ?? "config";
-        var cfgBlobName = builder.Configuration["ConfigBlobName"] ?? "config.json";
-        var cfgBlob = tempBlobServiceClient.GetBlobContainerClient(cfgContainer).GetBlobClient(cfgBlobName);
-        if (await cfgBlob.ExistsAsync())
-        {
-            var download = await cfgBlob.DownloadContentAsync();
-            var json = download.Value.Content.ToString();
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-            builder.Configuration.AddJsonStream(ms);
-        }
-        Console.WriteLine("Config fetched");
-    }
-    catch
-    {
-        // Ignore config fetch errors; app will proceed with local configuration
-        Console.WriteLine("Proceeding with local config");
-    }
-}
-else
-{
-    Console.WriteLine("No blob service URI provided");
-}
 
 builder.Services.AddSingleton<IChatResponseHandler, ActionChatResponseHandler>();
 
@@ -58,12 +28,12 @@ builder.Services.AddSingleton<IRestApiService, RestApiService>();
 builder.Services.AddSingleton<CoreServer.Services.IAuthService, CoreServer.Services.AuthService>();
 builder.Services.AddSingleton<CoreServer.Services.ITokenService, CoreServer.Services.TokenService>();
 
-// Register BlobServiceClient if configured
+var blobServiceUri = builder.Configuration["BlobServiceUri"];
 blobServiceUri = builder.Configuration["BlobServiceUri"];
+
 if (!string.IsNullOrWhiteSpace(blobServiceUri))
 {
     builder.Services.AddSingleton(new BlobServiceClient(new Uri(blobServiceUri), new DefaultAzureCredential()));
-    // background blob logger
 }
 else
 {
@@ -94,6 +64,8 @@ var app = builder.Build();
 // Initialize database objects for auth (no-op if not configured)
 var authInit = app.Services.GetRequiredService<CoreServer.Services.IAuthService>();
 await authInit.InitializeAsync();
+
+#region REST endpoints
 
 // REST API endpoints
 app.MapGet("/online", (IRestApiService logic) => Results.Ok(logic.OnlinePing()));
@@ -138,6 +110,44 @@ app.MapGet("/chat/history", (HttpRequest req, IChatHub hub) =>
     var messages = hub.GetHistory(20, includeEvents);
     return Results.Ok(new { messages });
 });
+
+// Config endpoint: returns JSON content from Azure Blob Storage config container by id (id.json)
+app.MapGet("/config", async (HttpRequest req, BlobServiceClient? blobSvc, IConfiguration config) =>
+{
+    var id = req.Query["id"].ToString();
+    if (string.IsNullOrWhiteSpace(id))
+        return Results.BadRequest(new { error = "Missing id parameter" });
+
+    // Basic validation to avoid traversal or weird names
+    if (id.Length > 200 || id.Contains("..") || id.IndexOfAny(['/', '\\']) >= 0)
+        return Results.BadRequest(new { error = "Invalid request" });
+
+    if (blobSvc is null)
+        return Results.Problem(detail: "Blob service not configured", statusCode: StatusCodes.Status503ServiceUnavailable);
+
+    var containerName = config["ConfigContainerName"] ?? "config";
+    var blobName = id.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ? id : id + ".json";
+
+    try
+    {
+        var container = blobSvc.GetBlobContainerClient(containerName);
+        var blob = container.GetBlobClient(blobName);
+
+        if (!await blob.ExistsAsync())
+            return Results.NotFound(new { error = "Config not found" });
+
+        var download = await blob.DownloadContentAsync();
+        var json = download.Value.Content.ToString();
+        return Results.Text(json, "application/json", Encoding.UTF8);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[CONFIG] Error fetching '{id}': {ex}");
+        return Results.StatusCode(StatusCodes.Status500InternalServerError);
+    }
+});
+
+#endregion
 
 // Enforce HTTPS/HSTS in production (uncomment to enable)
 // if (!app.Environment.IsDevelopment())
