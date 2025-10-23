@@ -63,7 +63,18 @@ var app = builder.Build();
 
 // Initialize database objects for auth (no-op if not configured)
 var authInit = app.Services.GetRequiredService<CoreServer.Services.IAuthService>();
-await authInit.InitializeAsync();
+_ = Task.Run(async () =>
+{
+    try
+    {
+        await authInit.InitializeAsync();
+    }
+    catch (Exception ex)
+    {
+        // Do not fail app startup if DB init has transient issues
+        Console.WriteLine($"[AUTH INIT] Initialization error (non-fatal): {ex.Message}");
+    }
+});
 
 #region REST endpoints
 
