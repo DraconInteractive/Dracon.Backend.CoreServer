@@ -37,7 +37,7 @@ public class RegisterUserAction : IChatAction
         
         // get user name
         var uIndex = Array.IndexOf(command.Args, "-u");
-        if (uIndex == -1 || command.Args.Length == uIndex - 1) // Either -u doesnt exist, or its the last element
+        if (uIndex == -1 || command.Args.Length == uIndex) // Either -u doesnt exist, or its the last element
         {
             response = useJson ? new JsonReturnPacket(clientId, "Error: Missing username (-u)", true).GetJson() : "Error: Missing username (-u)";
             return response;
@@ -52,7 +52,7 @@ public class RegisterUserAction : IChatAction
         var username = command.Args[uIndex + 1];
 
         var pIndex = Array.IndexOf(command.Args, "-p");
-        if (pIndex == -1 || command.Args.Length == pIndex - 1)
+        if (pIndex == -1 || command.Args.Length == pIndex)
         {
             response = useJson ? new JsonReturnPacket(clientId, "Error: Missing password (-p)", true).GetJson() : "Error: Missing password (-p)";
             return response;
@@ -65,7 +65,13 @@ public class RegisterUserAction : IChatAction
         }
 
         var password = command.Args[pIndex + 1];
-
+        if (password.Length is < 6 or > 25)
+        {
+            const string errMessage = "Error: Invalid password length. Password must be between 6 and 25 characters";
+            response = useJson ? new JsonReturnPacket(clientId, errMessage, true).GetJson() : errMessage;
+            return response;
+        }
+        
         // Call auth service to register (Email optional; not provided via args here)
         var (ok, error) = await _auth.RegisterAsync(username, password, null, cancellationToken);
         if (!ok)
